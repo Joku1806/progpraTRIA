@@ -54,9 +54,17 @@ void DW3000_Interface::receive_packet(const dwt_cb_data_t *cb_data) {
 }
 
 void DW3000_Interface::send_packet(TRIA_Packet& packet) {
-  // warten bis letztes Paket gesendet wurde
-  while (!(get_sys_status() & TXFRS)) { delayMicroseconds(100); }
-  // 2. Paket in TX_BUFFER schreiben
+  while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK)) { delayMicroseconds(100); }
+  dwt_writetxdata(packet.packed_size(), packet.packed(), 0);
+  dwt_writetxfctrl(packet.packed_size() + FCS_LEN, 0, 0);
+
+  if (packet.is_range_request()) {
+    // diesen Hack vielleicht noch mal umschreiben :^)
+    // sollte aber perfekt funktionieren, jedenfalls
+    // bis die Signatur von packed() geändert wird
+    dwt_readtxtimestamp(m_saved_tx.packed());
+  }
+  
   // TODO: nachsehen ob TX_STAMP automatisch geschrieben wird
   dwt_writefastCMD(CMD_TX);
 }
