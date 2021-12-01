@@ -38,13 +38,19 @@ void DW3000_Interface::reset_DW3000() {
   delayMicroseconds(1000);
 }
 
-
-TRIA_Packet DW3000_Interface::receive_packet() {
-  // warten bis Paket ankommt
-  while (!(get_sys_status() & RXFR)) { delayMicroseconds(100); }
-  // 2. angekommene Daten aus RX_BUFFER_0 auslesen und in Paket schreiben
-  // 2. RX_STAMP auslesen und in Paket schreiben
-  // 3. Paket zurückgeben
+void DW3000_Interface::receive_packet(const dwt_cb_data_t *cb_data) {
+  // 1. angekommene Daten aus RX_BUFFER_0 auslesen und in Paket schreiben
+  // 2. falls Paket nicht für uns bestimmt, ignorieren (DW3000_Interface braucht ID!)
+  // 3. falls range request:
+  //    3.1. Typ zu range response ändern
+  //    3.2. RX_STAMP in Paket schreiben
+  //    3.3. Paket zurücksenden
+  // 4. falls range response:
+  //    4.1. Typ zu range report ändern
+  //    4.2. RX_STAMP_packet = RX_STAMP - (TX_STAMP_packet - RX_STAMP_packet)
+  //    4.3. TX_STAMP_packet = eigene gespeicherte TX_STAMP
+  //    4.4. modifiziertes Paket in Queue schreiben
+  //    4.5. dem Host signalisieren, dass ein neues Paket angekommen ist. Wie macht man das am besten?
 }
 
 void DW3000_Interface::send_packet(TRIA_Packet& packet) {
