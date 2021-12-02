@@ -24,7 +24,7 @@ RH_RF22 driver;
 // Class to manage message delivery and receipt, using the driver declared above
 RHRouter manager(driver, SERVER3_ADDRESS);
 
-void setup() {
+void setup_lora() {
   Serial.begin(9600);
   if (!manager.init())
     Serial.println("init failed");
@@ -40,7 +40,7 @@ uint8_t data[] = "And hello back to you from server3";
 // Dont put this on the stack:
 uint8_t buf[RH_ROUTER_MAX_MESSAGE_LEN];
 
-void loop() {
+void loop_lora() {
   uint8_t len = sizeof(buf);
   uint8_t from;
   if (manager.recvfromAck(buf, &len, &from)) {

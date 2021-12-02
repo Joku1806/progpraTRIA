@@ -8,6 +8,7 @@ enum TRIA_dev_type {
 
 class TRIA_ID : TRIA_Field {
   public:
+    TRIA_ID() : m_id(0) {};
     TRIA_ID(TRIA_dev_type type, uint8_t id) : m_id((type << 5) | (id & 0x1f)) {};
     TRIA_dev_type type();
     uint8_t id();
@@ -15,6 +16,7 @@ class TRIA_ID : TRIA_Field {
 
     uint8_t* packed() override;
     size_t packed_size() override;
+    void initialise_from_buffer(uint8_t* buffer) override;
   private:
     uint8_t m_id;
 };

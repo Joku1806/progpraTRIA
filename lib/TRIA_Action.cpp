@@ -9,3 +9,7 @@ uint8_t* TRIA_Action::packed() {
 size_t TRIA_Action::packed_size() {
   return sizeof(this->m_action);
 }
+
+void TRIA_Action::initialise_from_buffer(uint8_t* buffer) {
+  m_action = (action)*buffer;
+}

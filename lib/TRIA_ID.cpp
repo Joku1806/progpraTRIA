@@ -11,3 +11,4 @@ bool TRIA_ID::matches_mask(TRIA_ID mask) {
 
 uint8_t* TRIA_ID::packed() { return &m_id; }
 size_t TRIA_ID::packed_size() { return sizeof(m_id); }
+void TRIA_ID::initialise_from_buffer(uint8_t* buffer) { m_id = *buffer; }
