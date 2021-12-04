@@ -1,0 +1,10 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: true
+ColumnLimit: 0
+ConstructorInitializerIndentWidth: 2
+IndentWidth: 2
+IndentCaseLabels: true
+SpaceBeforeCpp11BracedList: true
