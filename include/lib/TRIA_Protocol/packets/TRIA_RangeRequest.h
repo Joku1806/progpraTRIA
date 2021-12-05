@@ -7,16 +7,22 @@ public:
   static const size_t PACKED_SIZE = TRIA_Action::PACKED_SIZE + 2 * TRIA_ID::PACKED_SIZE;
 
   TRIA_RangeRequest() {
+    auto a = TRIA_Action(range_request);
+    auto sid = TRIA_ID();
+    auto rid = TRIA_ID();
+
     m_fields = {
-        (TRIA_Field *)&TRIA_Action(),
-        (TRIA_Field *)&TRIA_ID(),
-        (TRIA_Field *)&TRIA_ID(),
+        (TRIA_Field *)&a,
+        (TRIA_Field *)&sid,
+        (TRIA_Field *)&rid,
     };
   };
 
   TRIA_RangeRequest(const TRIA_ID &sid, const TRIA_ID &rid) {
+    auto a = TRIA_Action(range_request);
+
     m_fields = {
-        (TRIA_Field *)&TRIA_Action(range_request),
+        (TRIA_Field *)&a,
         (TRIA_Field *)&sid,
         (TRIA_Field *)&rid,
     };

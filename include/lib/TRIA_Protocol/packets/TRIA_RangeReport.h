@@ -7,18 +7,26 @@ public:
   static const size_t PACKED_SIZE = TRIA_Action::PACKED_SIZE + 2 * TRIA_ID::PACKED_SIZE + 2 * TRIA_Stamp::PACKED_SIZE;
 
   TRIA_RangeReport() {
+    auto a = TRIA_Action(range_report);
+    auto sid = TRIA_ID();
+    auto rid = TRIA_ID();
+    auto rx = TRIA_Stamp();
+    auto tx = TRIA_Stamp();
+
     m_fields = {
-        (TRIA_Field *)&TRIA_Action(),
-        (TRIA_Field *)&TRIA_ID(),
-        (TRIA_Field *)&TRIA_ID(),
-        (TRIA_Field *)&TRIA_Stamp(),
-        (TRIA_Field *)&TRIA_Stamp(),
+        (TRIA_Field *)&a,
+        (TRIA_Field *)&sid,
+        (TRIA_Field *)&rid,
+        (TRIA_Field *)&rx,
+        (TRIA_Field *)&tx,
     };
   };
 
   TRIA_RangeReport(TRIA_ID sid, TRIA_ID rid, TRIA_Stamp rx, TRIA_Stamp tx) {
+    auto a = TRIA_Action(range_response);
+
     m_fields = {
-        (TRIA_Field *)&TRIA_Action(range_response),
+        (TRIA_Field *)&a,
         (TRIA_Field *)&sid,
         (TRIA_Field *)&rid,
         (TRIA_Field *)&rx,
