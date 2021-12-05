@@ -41,6 +41,9 @@ void DW3000_Interface::reset_DW3000() {
   delayMicroseconds(100);
   pinMode(SPI_reset, INPUT);
   delayMicroseconds(1000);
+
+  pinMode(LoRa_chipselect, OUTPUT);
+  digitalWrite(LoRa_chipselect, HIGH);
 }
 
 std::optional<TRIA_RangeReport> DW3000_Interface::handle_incoming_packet(size_t received_bytes) {
