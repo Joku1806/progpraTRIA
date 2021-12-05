@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/fields/TRIA_Field.h>
+#include <lib/TRIA_Protocol/fields/TRIA_Field.h>
 
 class TRIA_Stamp : TRIA_Field {
 public:

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <lib/fields/TRIA_Action.h>
-#include <lib/fields/TRIA_Field.h>
-#include <lib/fields/TRIA_ID.h>
-#include <lib/fields/TRIA_Stamp.h>
+#include <lib/TRIA_Protocol/fields/TRIA_Action.h>
+#include <lib/TRIA_Protocol/fields/TRIA_Field.h>
+#include <lib/TRIA_Protocol/fields/TRIA_ID.h>
+#include <lib/TRIA_Protocol/fields/TRIA_Stamp.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <vector>

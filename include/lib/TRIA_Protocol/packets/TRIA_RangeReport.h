@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/packets/TRIA_GenericPacket.h>
+#include <lib/TRIA_Protocol/packets/TRIA_GenericPacket.h>
 
 class TRIA_RangeReport : public TRIA_GenericPacket {
 public:

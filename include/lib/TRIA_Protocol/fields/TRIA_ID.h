@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/fields/TRIA_Field.h>
+#include <lib/TRIA_Protocol/fields/TRIA_Field.h>
 
 enum TRIA_dev_type {
   tracker = 1 << 7,
