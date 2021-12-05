@@ -9,7 +9,7 @@
   do {                                                                                 \
     if (!(expression)) {                                                               \
       Serial.printf("ASSERTION FAILED: %s in %s:%u", #expression, __FILE__, __LINE__); \
-      exit(EXIT_FAILURE)                                                               \
+      exit(EXIT_FAILURE);                                                              \
     }                                                                                  \
   } while (0)
 
