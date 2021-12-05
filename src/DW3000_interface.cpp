@@ -29,6 +29,8 @@ DW3000_Interface::DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_c
 
   dwt_configure(&config);
   dwt_setcallbacks(nullptr, recv_handler, nullptr, nullptr, nullptr, nullptr);
+  pinMode(SPI_interrupt, INPUT_PULLUP);
+  attachInterrupt(SPI_interrupt, dwt_isr, CHANGE);
 
   dwt_writefastCMD(CMD_RX);
 }
