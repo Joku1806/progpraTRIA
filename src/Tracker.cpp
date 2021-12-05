@@ -1,4 +1,4 @@
-#include <lib/DW3000_interface.h>
+#include <src/DW3000_interface.h>
 
 DW3000_Interface interface;
 TRIA_ID id;

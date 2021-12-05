@@ -2,10 +2,10 @@
 
 #include <SPI.h>
 #include <lib/DW3000_DECA_API/Src/decadriver/deca_device_api.h>
-#include <lib/packets/TRIA_GenericPacket.h>
-#include <lib/packets/TRIA_RangeReport.h>
-#include <lib/packets/TRIA_RangeRequest.h>
-#include <lib/packets/TRIA_RangeResponse.h>
+#include <lib/TRIA_Protocol/packets/TRIA_GenericPacket.h>
+#include <lib/TRIA_Protocol/packets/TRIA_RangeReport.h>
+#include <lib/TRIA_Protocol/packets/TRIA_RangeRequest.h>
+#include <lib/TRIA_Protocol/packets/TRIA_RangeResponse.h>
 #include <lib/pin_layout.h>
 #include <optional>
 

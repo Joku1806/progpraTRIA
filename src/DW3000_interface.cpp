@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <lib/DW3000_DECA_API/Src/decadriver/deca_regs.h>
-#include <lib/DW3000_interface.h>
 #include <lib/assertions.h>
+#include <src/DW3000_interface.h>
 
 DW3000_Interface::DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
   m_id = id;
@@ -87,7 +87,7 @@ std::optional<TRIA_RangeReport> DW3000_Interface::handle_incoming_packet(size_t 
 }
 
 void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
-  VERIFY(!packet->is_type(range_report));
+  VERIFY(!packet.is_type(range_report));
   while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK)) {}
 
   packet.pack_into(m_packet_buffer);
