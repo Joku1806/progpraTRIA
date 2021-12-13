@@ -46,7 +46,7 @@ void DW3000_Interface::reset_DW3000() {
   digitalWrite(LoRa_chipselect, HIGH);
 }
 
-std::optional<TRIA_RangeReport> DW3000_Interface::handle_incoming_packet(size_t received_bytes) {
+bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out) {
   VERIFY(received_bytes - FCS_LEN <= TRIA_GenericPacket::PACKED_SIZE);
   dwt_readrxdata(m_packet_buffer, received_bytes - FCS_LEN, 0);
 
@@ -63,7 +63,7 @@ std::optional<TRIA_RangeReport> DW3000_Interface::handle_incoming_packet(size_t 
   receive_mask.initialise_from_buffer(m_packet_buffer + TRIA_Action::PACKED_SIZE + TRIA_ID::PACKED_SIZE);
   if (!m_id.matches_mask(receive_mask)) {
     dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
-    return {};
+    return false;
   }
 
   dwt_readrxtimestamp(m_stamp_buffer);
@@ -81,13 +81,14 @@ std::optional<TRIA_RangeReport> DW3000_Interface::handle_incoming_packet(size_t 
   if (received->is_type(range_request)) {
     auto response = TRIA_RangeResponse(received->received_from(), m_id, m_rx_stamp);
     send_packet(response);
-    return {};
+    return false;
   } else {
     // FIXME: irgendwie ohne hässlichen Cast hinkriegen
     TRIA_Stamp measured_rx = ((TRIA_RangeResponse *)received)->get_rx_stamp();
     TRIA_Stamp measured_tx = ((TRIA_RangeResponse *)received)->get_tx_stamp();
     m_rx_stamp = m_rx_stamp - (measured_tx - measured_rx);
-    return TRIA_RangeReport(received->received_from(), m_id, m_rx_stamp, m_tx_stamp);
+    out = TRIA_RangeReport(received->received_from(), m_id, m_rx_stamp, m_tx_stamp);
+    return true;
   }
 }
 
