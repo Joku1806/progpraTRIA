@@ -1,4 +1,5 @@
 #include <src/DW3000_interface.h>
+#include <src/Tracker.h>
 
 #ifdef SENDER
 TRIA_ID id = TRIA_ID(tracker, 1);
@@ -8,7 +9,7 @@ TRIA_ID id = TRIA_ID(tracker, 2);
 DW3000_Interface interface = DW3000_Interface(id, receive_handler);
 TRIA_RangeReport report;
 
-static void receive_handler(const dwt_cb_data_t *cb_data) {
+void receive_handler(const dwt_cb_data_t *cb_data) {
   auto got_report = interface.handle_incoming_packet(cb_data->datalength, report);
   if (!got_report) {
     return;

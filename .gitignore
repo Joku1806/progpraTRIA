@@ -6,4 +6,4 @@ compile_commands.json
 python_env
 pyvenv.cfg
 src/__pycache__
-include/lib/DW3000_DECA_API
+lib/DW3000_DECA_API

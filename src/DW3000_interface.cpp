@@ -1,5 +1,5 @@
+#include <../lib/DW3000_DECA_API/Src/decadriver/deca_regs.h>
 #include <Arduino.h>
-#include <lib/DW3000_DECA_API/Src/decadriver/deca_regs.h>
 #include <lib/assertions.h>
 #include <src/DW3000_interface.h>
 
@@ -57,6 +57,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   switch (a.value()) {
     case range_request: VERIFY(received_bytes - FCS_LEN == TRIA_RangeRequest::PACKED_SIZE);
     case range_response: VERIFY(received_bytes - FCS_LEN == TRIA_RangeResponse::PACKED_SIZE);
+    default: VERIFY_NOT_REACHED();
   }
 
   TRIA_ID receive_mask;
@@ -73,6 +74,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   switch (a.value()) {
     case range_request: received = &m_cached_range_request;
     case range_response: received = &m_cached_range_response;
+    default: VERIFY_NOT_REACHED();
   }
 
   received->initialise_from_buffer(m_packet_buffer);
