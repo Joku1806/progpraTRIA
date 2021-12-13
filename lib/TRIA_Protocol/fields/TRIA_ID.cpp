@@ -1,4 +1,4 @@
-#include <lib/fields/TRIA_ID.h>
+#include <lib/TRIA_Protocol/fields/TRIA_ID.h>
 
 TRIA_dev_type TRIA_ID::type() { return (TRIA_dev_type)((m_id & 0xe0) >> 5); }
 uint8_t TRIA_ID::id() { return m_id & 0x1f; }

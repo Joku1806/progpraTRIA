@@ -1,4 +1,4 @@
-#include <lib/fields/TRIA_Stamp.h>
+#include <lib/TRIA_Protocol/fields/TRIA_Stamp.h>
 
 void TRIA_Stamp::set_value(uint64_t stamp) {
   m_stamp = stamp;
