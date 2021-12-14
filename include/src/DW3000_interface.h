@@ -1,6 +1,6 @@
 #pragma once
 
-#include <../lib/DW3000_DECA_API/Src/decadriver/deca_device_api.h>
+#include <../lib/DW3000_DECA_Driver/decadriver/deca_device_api.h>
 #include <SPI.h>
 #include <lib/TRIA_Protocol/packets/TRIA_GenericPacket.h>
 #include <lib/TRIA_Protocol/packets/TRIA_RangeReport.h>
