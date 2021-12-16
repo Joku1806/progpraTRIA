@@ -10,18 +10,18 @@
  *
  */
 
-#include <deca_device_api.h>
-#include <port.h>
+#include <decadriver/deca_device_api.h>
+#include <platform/port.h>
 // ---------------------------------------------------------------------------
 //
-// NB: The purpose of this file is to provide for microprocessor interrupt enable/disable, this is used for 
-//     controlling mutual exclusion from critical sections in the code where interrupts and background 
-//     processing may interact.  The code using this is kept to a minimum and the disabling time is also 
+// NB: The purpose of this file is to provide for microprocessor interrupt enable/disable, this is used for
+//     controlling mutual exclusion from critical sections in the code where interrupts and background
+//     processing may interact.  The code using this is kept to a minimum and the disabling time is also
 //     kept to a minimum, so blanket interrupt disable may be the easiest way to provide this.  But at a
 //     minimum those interrupts coming from the decawave device should be disabled/re-enabled by this activity.
 //
 //     In porting this to a particular microprocessor, the implementer may choose to use #defines in the
-//     deca_irq.h include file to map these calls transparently to the target system.  Alternatively the 
+//     deca_irq.h include file to map these calls transparently to the target system.  Alternatively the
 //     appropriate code may be embedded in the functions provided below.
 //
 //     This mutex dependent on HW port.
@@ -32,7 +32,6 @@
 //	   __save_intstate()
 //     __restore_intstate()
 // ---------------------------------------------------------------------------
-
 
 /*! ------------------------------------------------------------------------------------------------------------------
  * Function: decamutexon()
@@ -48,14 +47,13 @@
  *
  * returns the state of the DW1000 interrupt
  */
-decaIrqStatus_t decamutexon(void)           
-{
-	decaIrqStatus_t s = port_GetEXT_IRQStatus();
+decaIrqStatus_t decamutexon(void) {
+  decaIrqStatus_t s = port_GetEXT_IRQStatus();
 
-	if(s) {
-		port_DisableEXT_IRQ(); //disable the external interrupt line
-	}
-	return s ;   // return state before disable, value is used to re-enable in decamutexoff call
+  if (s) {
+    port_DisableEXT_IRQ(); //disable the external interrupt line
+  }
+  return s; // return state before disable, value is used to re-enable in decamutexoff call
 }
 
 /*! ------------------------------------------------------------------------------------------------------------------
@@ -73,9 +71,9 @@ decaIrqStatus_t decamutexon(void)
  *
  * returns the state of the DW1000 interrupt
  */
-void decamutexoff(decaIrqStatus_t s)        // put a function here that re-enables the interrupt at the end of the critical section
+void decamutexoff(decaIrqStatus_t s) // put a function here that re-enables the interrupt at the end of the critical section
 {
-	if(s) { //need to check the port state as we can't use level sensitive interrupt on the STM ARM
-		port_EnableEXT_IRQ();
-	}
+  if (s) { //need to check the port state as we can't use level sensitive interrupt on the STM ARM
+    port_EnableEXT_IRQ();
+  }
 }
