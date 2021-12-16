@@ -7,7 +7,6 @@
 #include <lib/TRIA_Protocol/packets/TRIA_RangeRequest.h>
 #include <lib/TRIA_Protocol/packets/TRIA_RangeResponse.h>
 #include <lib/pin_layout.h>
-#include <optional>
 
 class DW3000_Interface {
 public:
