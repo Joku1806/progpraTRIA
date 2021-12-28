@@ -1,5 +1,6 @@
 #include <../lib/DW3000_DECA_Driver/decadriver/deca_regs.h>
 #include <Arduino.h>
+#include <SPI.h>
 #include <lib/assertions.h>
 #include <src/DW3000_interface.h>
 
