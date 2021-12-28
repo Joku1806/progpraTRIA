@@ -43,6 +43,7 @@ void DW3000_Interface::reset_DW3000() {
   pinMode(SPI_reset, INPUT);
   delayMicroseconds(1000);
 
+  // LoRa Chipselect auf HIGH schalten, damit er nicht während der SPI Kommunikation mit dem DW3000 stört.
   pinMode(LoRa_chipselect, OUTPUT);
   digitalWrite(LoRa_chipselect, HIGH);
 }
