@@ -48,6 +48,9 @@ void DW3000_Interface::reset_DW3000() {
   digitalWrite(LoRa_chipselect, HIGH);
 }
 
+// TODO: nachschauen ob diese Funktion durch IRQ Interrupts mehrmals aufgerufen werden kann
+// glaube nicht, weil nach dem ersten IRQ nachfolgende IRQ Interrupts maskiert werden sollten
+// und diese Funktion nur nach einem IRQ Interrupt aufgerufen wird.
 bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out) {
   VERIFY(received_bytes - FCS_LEN <= TRIA_GenericPacket::PACKED_SIZE);
   dwt_readrxdata(m_packet_buffer, received_bytes - FCS_LEN, 0);
@@ -98,6 +101,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
 
 void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
   VERIFY(!packet.is_type(range_report));
+  // TODO: Wird das hier überhaupt gebraucht?
   while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK)) {}
 
   packet.pack_into(m_packet_buffer);
