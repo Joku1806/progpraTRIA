@@ -2,50 +2,15 @@
 #include <SPI.h>
 #include <decadriver/deca_regs.h>
 #include <lib/assertions.h>
+#include <platform/deca_spi.h>
 #include <src/DW3000_interface.h>
 
 DW3000_Interface::DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
   m_id = id;
-  m_spi_settings = SPISettings(10000000, MSBFIRST, SPI_MODE0);
-  reset_DW3000();
-  dwt_initialise(DWT_DW_INIT);
-
-  // TODO: nachfragen ob diese Werte in Ordnung sind,
-  // bzw. ob der SPI Speed runtergeschraubt werden muss
-  dwt_config_t config = {
-      .chan = 5,
-      .txPreambLength = DWT_PLEN_32,
-      .rxPAC = DWT_PAC4,
-      .txCode = 3,
-      .rxCode = 3,
-      .sfdType = DWT_SFD_DW_16,
-      .dataRate = DWT_BR_6M8,
-      .phrMode = DWT_PHRMODE_STD,
-      .phrRate = DWT_BR_6M8,
-      .sfdTO = DWT_PLEN_32 + 1 + DWT_SFD_DW_16 - DWT_PAC4,
-      .stsMode = DWT_STS_MODE_OFF,
-      .stsLength = DWT_STS_LEN_32,
-      .pdoaMode = DWT_PDOA_M0,
-  };
-
-  dwt_configure(&config);
-  dwt_setcallbacks(nullptr, recv_handler, nullptr, nullptr, nullptr, nullptr);
-  pinMode(SPI_interrupt, INPUT_PULLUP);
-  attachInterrupt(SPI_interrupt, dwt_isr, HIGH);
-
-  dwt_writefastCMD(CMD_RX);
-}
-
-void DW3000_Interface::reset_DW3000() {
-  pinMode(SPI_reset, OUTPUT);
-  digitalWrite(SPI_reset, LOW);
-  delayMicroseconds(100);
-  pinMode(SPI_reset, INPUT);
-  delayMicroseconds(1000);
-
-  // LoRa Chipselect auf HIGH schalten, damit er nicht während der SPI Kommunikation mit dem DW3000 stört.
-  pinMode(LoRa_chipselect, OUTPUT);
-  digitalWrite(LoRa_chipselect, HIGH);
+  // Reihenfolge ist hier wichtig, nicht ändern!
+  DWIC_reset();
+  DWIC_configure_spi(SPI_FASTRATE);
+  DWIC_configure_interrupts(recv_handler);
 }
 
 // TODO: nachschauen ob diese Funktion durch IRQ Interrupts mehrmals aufgerufen werden kann
@@ -68,7 +33,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   TRIA_ID receive_mask;
   receive_mask.initialise_from_buffer(m_packet_buffer + TRIA_Action::PACKED_SIZE + TRIA_ID::PACKED_SIZE);
   if (!m_id.matches_mask(receive_mask)) {
-    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
+    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
     return false;
   }
 
@@ -83,7 +48,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   }
 
   received->initialise_from_buffer(m_packet_buffer);
-  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
+  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
 
   if (received->is_type(range_request)) {
     auto response = TRIA_RangeResponse(received->received_from(), m_id, m_rx_stamp);
@@ -115,5 +80,5 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
     m_tx_stamp.initialise_from_buffer(m_stamp_buffer);
   }
 
-  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
+  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_TX);
 }
