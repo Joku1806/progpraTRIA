@@ -10,6 +10,9 @@ bool TRIA_ID::matches_mask(TRIA_ID mask) {
   }
 
   // Nachricht an Empfänger mit bestimmten Typ
+  // FIXME: Sollte prüfen, ob min. ein Typ übereinstimmt,
+  // ansonsten ist es nicht möglich, dass ein Coordinator | Tracker
+  // eine Range Request für Tracker zugestellt bekommt.
   if (mask.type() == type() && mask.id() == 0) {
     return true;
   }
