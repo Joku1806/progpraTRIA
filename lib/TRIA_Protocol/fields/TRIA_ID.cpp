@@ -1,8 +1,9 @@
 #include <lib/TRIA_Protocol/fields/TRIA_ID.h>
 
-TRIA_dev_type TRIA_ID::type() { return (TRIA_dev_type)((m_id & 0xe0) >> 5); }
+TRIA_dev_type TRIA_ID::type() { return (TRIA_dev_type)(m_id & 0xe0); }
 uint8_t TRIA_ID::id() { return m_id & 0x1f; }
 
+// FIXME: besseren Namen finden
 bool TRIA_ID::matches_mask(TRIA_ID mask) {
   // Nachricht an alle Empfänger
   if (mask.type() == 0 && mask.id() == 0) {
@@ -10,10 +11,18 @@ bool TRIA_ID::matches_mask(TRIA_ID mask) {
   }
 
   // Nachricht an Empfänger mit bestimmten Typ
-  // FIXME: Sollte prüfen, ob min. ein Typ übereinstimmt,
-  // ansonsten ist es nicht möglich, dass ein Coordinator | Tracker
-  // eine Range Request für Tracker zugestellt bekommt.
-  if (mask.type() == type() && mask.id() == 0) {
+  // ein Tracker | Coordinator darf eine Nachricht für Tracker annehmen,
+  // aber nicht anders herum, d.h. mask muss ein subset der eigenen id sein
+  bool mask_exceeds_id = false;
+  for (size_t i = 0; i < 3; i++) {
+    // FIXME: ist operator precedence hier richtig?
+    if (mask.type() & 1 << (5 + i) && !(type() & 1 << (5 + i))) {
+      mask_exceeds_id = true;
+      break;
+    }
+  }
+
+  if (!mask_exceeds_id && mask.id() == 0) {
     return true;
   }
 
