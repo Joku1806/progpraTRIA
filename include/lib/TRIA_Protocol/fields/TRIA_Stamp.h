@@ -2,7 +2,7 @@
 
 #include <lib/TRIA_Protocol/fields/TRIA_Field.h>
 
-class TRIA_Stamp : TRIA_Field {
+class TRIA_Stamp : public TRIA_Field {
 public:
   static const size_t PACKED_SIZE = 5;
 

@@ -8,7 +8,7 @@ enum TRIA_dev_type {
   trackee = 1 << 5,
 };
 
-class TRIA_ID : TRIA_Field {
+class TRIA_ID : public TRIA_Field {
 public:
   static const size_t PACKED_SIZE = sizeof(uint8_t);
 
