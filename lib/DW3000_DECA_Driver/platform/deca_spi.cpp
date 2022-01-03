@@ -4,6 +4,9 @@
 #include <platform/pin_mappings.h>
 
 SPISettings spi_settings;
+void DWIC_set_spi_rate(size_t spi_rate) {
+  spi_settings = SPISettings(spi_rate, MSBFIRST, SPI_MODE0);
+}
 
 void DWIC_reset() {
   pinMode(SPI_reset, OUTPUT);
@@ -14,10 +17,6 @@ void DWIC_reset() {
 
   DWIC_set_spi_rate(2000000);
   VERIFY(dwt_initialise(DWT_DW_INIT) == DWT_SUCCESS);
-}
-
-void DWIC_set_spi_rate(size_t spi_rate) {
-  spi_settings = SPISettings(spi_rate, MSBFIRST, SPI_MODE0);
 }
 
 void DWIC_configure_spi(size_t spi_rate) {
