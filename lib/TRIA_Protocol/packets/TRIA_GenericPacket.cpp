@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <lib/TRIA_Protocol/packets/TRIA_GenericPacket.h>
 #include <lib/assertions.h>
+#include <packets/TRIA_GenericPacket.h>
 
 bool TRIA_GenericPacket::is_addressed_to(TRIA_ID id) {
   return id.matches_mask(sent_to());

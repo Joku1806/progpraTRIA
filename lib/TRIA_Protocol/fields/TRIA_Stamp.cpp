@@ -1,4 +1,4 @@
-#include <lib/TRIA_Protocol/fields/TRIA_Stamp.h>
+#include <fields/TRIA_Stamp.h>
 #include <lib/assertions.h>
 #include <string>
 

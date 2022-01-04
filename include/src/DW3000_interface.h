@@ -2,10 +2,10 @@
 
 #include <SPI.h>
 #include <decadriver/deca_device_api.h>
-#include <lib/TRIA_Protocol/packets/TRIA_GenericPacket.h>
-#include <lib/TRIA_Protocol/packets/TRIA_RangeReport.h>
-#include <lib/TRIA_Protocol/packets/TRIA_RangeRequest.h>
-#include <lib/TRIA_Protocol/packets/TRIA_RangeResponse.h>
+#include <packets/TRIA_GenericPacket.h>
+#include <packets/TRIA_RangeReport.h>
+#include <packets/TRIA_RangeRequest.h>
+#include <packets/TRIA_RangeResponse.h>
 
 class DW3000_Interface {
 public:

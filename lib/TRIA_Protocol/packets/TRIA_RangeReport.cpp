@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <lib/TRIA_Protocol/packets/TRIA_RangeReport.h>
+#include <packets/TRIA_RangeReport.h>
 
 void TRIA_RangeReport::print() {
   size_t c_air = 299702458;

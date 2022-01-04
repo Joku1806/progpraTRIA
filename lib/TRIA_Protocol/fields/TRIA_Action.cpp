@@ -1,4 +1,4 @@
-#include <lib/TRIA_Protocol/fields/TRIA_Action.h>
+#include <fields/TRIA_Action.h>
 
 action TRIA_Action::value() { return m_action; };
 

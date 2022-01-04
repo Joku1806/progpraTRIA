@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lib/TRIA_Protocol/fields/TRIA_Field.h>
+#include <fields/TRIA_Field.h>
 
 enum action {
   range_request = 0,
