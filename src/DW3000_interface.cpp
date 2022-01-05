@@ -48,7 +48,10 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
 
   if (received->is_type(range_request)) {
-    auto response = TRIA_RangeResponse(received->received_from(), m_id, m_rx_stamp);
+    uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
+    uint32_t systime = dwt_readsystimestamphi32();
+    auto tx_stamp = TRIA_Stamp(systime << 8 + antenna_delay + SEND_DELAY_NS);
+    auto response = TRIA_RangeResponse(received->received_from(), m_id, m_rx_stamp, tx_stamp);
     send_packet(response);
     return false;
   } else {
@@ -71,15 +74,18 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
   packet.pack_into(m_packet_buffer);
   VERIFY(dwt_writetxdata(packet.packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
   dwt_writetxfctrl(packet.packed_size() + FCS_LEN, 0, 0);
-  // FIXME: TX_STAMP wird NICHT automatisch geschrieben
-  // Wir müssen eine delayed transmission machen, um die
-  // Timestamp selbst noch anhängen zu können
-  dwt_writefastCMD(CMD_TX);
 
   if (packet.is_type(range_request)) {
+    dwt_starttx(DWT_START_TX_IMMEDIATE);
     dwt_readtxtimestamp(m_stamp_buffer);
     m_tx_stamp.initialise_from_buffer(m_stamp_buffer);
+  } else if (packet.is_type(range_response)) {
+    uint32_t send_time = ((TRIA_RangeResponse *)&packet)->get_tx_stamp().value() >> 8;
+    VERIFY(send_time < dwt_readsystimestamphi32());
+    dwt_setdelayedtrxtime(send_time);
+    dwt_starttx(DWT_START_TX_DELAYED);
   }
 
+  // FIXME: Kann es passieren, dass etwas gesendet wird, während delayed tx noch aktiv ist?
   dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_TX);
 }

@@ -11,16 +11,18 @@ public:
     auto sid = TRIA_ID();
     auto rid = TRIA_ID();
     auto rx = TRIA_Stamp();
+    auto tx = TRIA_Stamp();
 
     m_fields = {
         (TRIA_Field *)&a,
         (TRIA_Field *)&sid,
         (TRIA_Field *)&rid,
         (TRIA_Field *)&rx,
+        (TRIA_Field *)&tx,
     };
   };
 
-  TRIA_RangeResponse(TRIA_ID sid, TRIA_ID rid, TRIA_Stamp rx) {
+  TRIA_RangeResponse(TRIA_ID sid, TRIA_ID rid, TRIA_Stamp rx, TRIA_Stamp tx) {
     auto a = TRIA_Action(range_response);
 
     m_fields = {
@@ -28,6 +30,7 @@ public:
         (TRIA_Field *)&sid,
         (TRIA_Field *)&rid,
         (TRIA_Field *)&rx,
+        (TRIA_Field *)&tx,
     };
   };
 
