@@ -72,7 +72,9 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
   packet.pack_into(m_packet_buffer);
   dwt_writetxdata(packet.packed_size(), m_packet_buffer, 0);
   dwt_writetxfctrl(packet.packed_size() + FCS_LEN, 0, 0);
-  // TODO: nachsehen ob TX_STAMP automatisch geschrieben wird
+  // FIXME: TX_STAMP wird NICHT automatisch geschrieben
+  // Wir müssen eine delayed transmission machen, um die
+  // Timestamp selbst noch anhängen zu können
   dwt_writefastCMD(CMD_TX);
 
   if (packet.is_type(range_request)) {
