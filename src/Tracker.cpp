@@ -18,7 +18,10 @@ void receive_handler(const dwt_cb_data_t *cb_data) {
   report.print();
 }
 
-void setup() {}
+void setup() {
+  delay(5);
+  Serial.println("Hallo aus setup()");
+}
 
 void loop() {
 #ifdef SENDER

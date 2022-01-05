@@ -13,9 +13,6 @@ DW3000_Interface::DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_c
   DWIC_configure_interrupts(recv_handler);
 }
 
-// TODO: nachschauen ob diese Funktion durch IRQ Interrupts mehrmals aufgerufen werden kann
-// glaube nicht, weil nach dem ersten IRQ nachfolgende IRQ Interrupts maskiert werden sollten
-// und diese Funktion nur nach einem IRQ Interrupt aufgerufen wird.
 bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out) {
   VERIFY(received_bytes - FCS_LEN <= TRIA_GenericPacket::PACKED_SIZE);
   dwt_readrxdata(m_packet_buffer, received_bytes - FCS_LEN, 0);
@@ -68,9 +65,11 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
   VERIFY(!packet.is_type(range_report));
   // TODO: Wird das hier überhaupt gebraucht?
   while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK)) {}
+  Serial.println("Sende Packet:");
+  packet.print();
 
   packet.pack_into(m_packet_buffer);
-  dwt_writetxdata(packet.packed_size(), m_packet_buffer, 0);
+  VERIFY(dwt_writetxdata(packet.packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
   dwt_writetxfctrl(packet.packed_size() + FCS_LEN, 0, 0);
   // FIXME: TX_STAMP wird NICHT automatisch geschrieben
   // Wir müssen eine delayed transmission machen, um die

@@ -40,7 +40,7 @@ void DWIC_configure_spi(size_t spi_rate) {
       .pdoaMode = DWT_PDOA_M0,
   };
 
-  dwt_configure(&config);
+  VERIFY(dwt_configure(&config) == DWT_SUCCESS);
   DWIC_set_spi_rate(spi_rate);
 }
 
@@ -103,7 +103,7 @@ int readfromspi(uint16_t headerLength, uint8_t *headerBuffer, uint16_t readlengt
     SPI.transfer(headerBuffer[i]);
   }
 
-  // FIXME: vllt noch ein extra Transfer davor?
+  SPI.transfer(0x00);
   for (size_t i = 0; i < readlength; i++) {
     readBuffer[i] = SPI.transfer(0x00);
   }
