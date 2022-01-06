@@ -34,7 +34,7 @@ public:
     };
   };
 
-  TRIA_Stamp set_tx_stamp(TRIA_Stamp &tx) { m_fields.at(tx_stamp_position) = &tx; }
+  void set_tx_stamp(TRIA_Stamp &tx) { m_fields.at(tx_stamp_position) = &tx; }
   TRIA_Stamp get_rx_stamp() { return *(TRIA_Stamp *)m_fields.at(rx_stamp_position); }
   TRIA_Stamp get_tx_stamp() { return *(TRIA_Stamp *)m_fields.at(tx_stamp_position); }
 };

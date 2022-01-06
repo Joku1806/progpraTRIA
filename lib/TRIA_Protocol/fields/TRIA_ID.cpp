@@ -51,7 +51,7 @@ void TRIA_ID::print() {
         case trackee: Serial.print("Trackee");
       }
 
-      if (i != 2 && type() << (5 + i)) {
+      if (i != 2 && ((uint8_t)type() & (1 << (5 + i)))) {
         Serial.print("/");
       }
     }
