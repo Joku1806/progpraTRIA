@@ -19,11 +19,8 @@ void DWIC_reset() {
   VERIFY(dwt_initialise(DWT_DW_INIT) == DWT_SUCCESS);
 }
 
+// FIXME: hat eigentlich nichts mit SPI zu tun
 void DWIC_configure_spi(size_t spi_rate) {
-  // LoRa Chipselect auf HIGH schalten, damit er nicht während der SPI Kommunikation mit dem DW3000 stört.
-  pinMode(LoRa_chipselect, OUTPUT);
-  digitalWrite(LoRa_chipselect, HIGH);
-
   dwt_config_t config = {
       .chan = 5,
       .txPreambLength = DWT_PLEN_32,
@@ -55,9 +52,8 @@ void DWIC_configure_interrupts(void (*recv_callback)(const dwt_cb_data_t *cb_dat
 }
 
 int writetospiwithcrc(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t bodyLength, const uint8_t *bodyBuffer, uint8_t crc8) {
-  decaIrqStatus_t stat = decamutexon();
-
   SPI.beginTransaction(spi_settings);
+  digitalWrite(SPI_chipselect, LOW);
 
   for (size_t i = 0; i < headerLength; i++) {
     SPI.transfer(headerBuffer[i]);
@@ -69,16 +65,16 @@ int writetospiwithcrc(uint16_t headerLength, const uint8_t *headerBuffer, uint16
 
   SPI.transfer(crc8);
 
+  digitalWrite(SPI_chipselect, HIGH);
   SPI.endTransaction();
-  decamutexoff(stat);
 
   return 0;
 }
 
 int writetospi(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t bodyLength, const uint8_t *bodyBuffer) {
-  decaIrqStatus_t stat = decamutexon();
-
   SPI.beginTransaction(spi_settings);
+  digitalWrite(SPI_chipselect, LOW);
+
 
   for (size_t i = 0; i < headerLength; i++) {
     SPI.transfer(headerBuffer[i]);
@@ -88,28 +84,33 @@ int writetospi(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t body
     SPI.transfer(bodyBuffer[i]);
   }
 
+  digitalWrite(SPI_chipselect, HIGH);
   SPI.endTransaction();
-  decamutexoff(stat);
 
   return 0;
 }
 
 int readfromspi(uint16_t headerLength, uint8_t *headerBuffer, uint16_t readlength, uint8_t *readBuffer) {
-  decaIrqStatus_t stat = decamutexon();
-
   SPI.beginTransaction(spi_settings);
+  digitalWrite(SPI_chipselect, LOW);
 
+  // Serial.print("Sende Command:");
   for (size_t i = 0; i < headerLength; i++) {
     SPI.transfer(headerBuffer[i]);
+    // Serial.print(" 0x");
+    // Serial.print(headerBuffer[i], HEX);
   }
+  // Serial.print("\nAntwort:");
 
-  SPI.transfer(0x00);
   for (size_t i = 0; i < readlength; i++) {
     readBuffer[i] = SPI.transfer(0x00);
+    // Serial.print(" 0x");
+    // Serial.print(readBuffer[i], HEX);
   }
+  // Serial.print("\n");
 
+  digitalWrite(SPI_chipselect, HIGH);
   SPI.endTransaction();
-  decamutexoff(stat);
 
   return 0;
 }

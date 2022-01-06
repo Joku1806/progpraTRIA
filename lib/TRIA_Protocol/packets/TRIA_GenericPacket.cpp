@@ -16,7 +16,7 @@ size_t TRIA_GenericPacket::pack_into(uint8_t *bytes) {
     offset += field->pack_into(bytes + offset);
   }
 
-  VERIFY(offset == PACKED_SIZE);
+  VERIFY(offset == packed_size());
   return PACKED_SIZE;
 }
 

@@ -1,12 +1,13 @@
 #include <src/DW3000_interface.h>
 #include <src/Tracker.h>
+#include <platform/pin_mappings.h>
 
 #ifdef SENDER
 TRIA_ID id = TRIA_ID(tracker, 1);
 #else
 TRIA_ID id = TRIA_ID(tracker, 2);
 #endif
-DW3000_Interface interface = DW3000_Interface(id, receive_handler);
+DW3000_Interface interface;
 TRIA_RangeReport report;
 
 void receive_handler(const dwt_cb_data_t *cb_data) {
@@ -19,8 +20,14 @@ void receive_handler(const dwt_cb_data_t *cb_data) {
 }
 
 void setup() {
-  delay(5);
-  Serial.println("Hallo aus setup()");
+  // LoRa Chipselect auf HIGH schalten, damit er nicht während der SPI Kommunikation mit dem DW3000 stört.
+  pinMode(LoRa_chipselect, OUTPUT);
+  digitalWrite(LoRa_chipselect, HIGH);
+  pinMode(SPI_chipselect, OUTPUT);
+  SPI.begin();
+  Serial.begin(9600);
+  while (!Serial);
+  interface = DW3000_Interface(id, receive_handler);
 }
 
 void loop() {
