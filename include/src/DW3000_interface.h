@@ -14,7 +14,8 @@ public:
   // random Wert, noch nicht getestet
   // größer machen, bis VERIFY in send_packet()
   // nicht mehr getriggert wird.
-  static const uint32_t SEND_DELAY_NS = 1000 << 8;
+  // FIXME: rausfinden welche Einheit das ist
+  static const uint32_t SEND_DELAY = 1000;
 
   DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data));
 
