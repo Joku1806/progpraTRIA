@@ -16,6 +16,7 @@ public:
   size_t pack_into(uint8_t *bytes) override;
   size_t packed_size() override;
   void initialise_from_buffer(uint8_t *buffer) override;
+  void print() override;
 
 private:
   uint64_t m_stamp;

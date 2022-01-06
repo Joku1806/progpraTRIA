@@ -26,11 +26,10 @@ public:
   TRIA_ID sent_to() { return *(TRIA_ID *)m_fields.at(receiver_id_position); }
   TRIA_ID received_from() { return *(TRIA_ID *)m_fields.at(sender_id_position); }
 
-  void print();
-
   size_t pack_into(uint8_t *bytes) override;
   size_t packed_size() override;
   void initialise_from_buffer(uint8_t *buffer) override;
+  void print() override;
 
 protected:
   std::vector<TRIA_Field *> m_fields;

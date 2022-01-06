@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <fields/TRIA_ID.h>
 
 TRIA_dev_type TRIA_ID::type() { return (TRIA_dev_type)(m_id & 0xe0); }
@@ -38,3 +39,24 @@ size_t TRIA_ID::pack_into(uint8_t *bytes) {
 size_t TRIA_ID::packed_size() { return PACKED_SIZE; }
 
 void TRIA_ID::initialise_from_buffer(uint8_t *buffer) { m_id = *buffer; }
+
+void TRIA_ID::print() {
+  if (type() == 0) {
+    Serial.print("Anycast");
+  } else {
+    for (size_t i = 0; i < 3; i++) {
+      switch (type() << (5 + i)) {
+        case coordinator: Serial.print("Coordinator");
+        case tracker: Serial.print("Tracker");
+        case trackee: Serial.print("Trackee");
+      }
+
+      if (i != 2 && type() << (5 + i)) {
+        Serial.print("/");
+      }
+    }
+  }
+
+  Serial.print(" 0x");
+  Serial.print(id(), HEX);
+}

@@ -10,10 +10,6 @@ bool TRIA_GenericPacket::is_type(action a) {
   return ((TRIA_Action *)m_fields.at(action_position))->value() == a;
 }
 
-void TRIA_GenericPacket::print() {
-  Serial.printf("Generic TRIA Packet.\n");
-}
-
 size_t TRIA_GenericPacket::pack_into(uint8_t *bytes) {
   size_t offset = 0;
   for (auto field : m_fields) {
@@ -37,5 +33,13 @@ void TRIA_GenericPacket::initialise_from_buffer(uint8_t *buffer) {
   for (auto field : m_fields) {
     field->initialise_from_buffer(buffer);
     buffer += field->packed_size();
+  }
+}
+
+void TRIA_GenericPacket::print() {
+  Serial.print("| ");
+  for (auto field : m_fields) {
+    field->print();
+    Serial.print(" | ");
   }
 }

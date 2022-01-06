@@ -44,3 +44,9 @@ void TRIA_Stamp::initialise_from_buffer(uint8_t *buffer) {
 
   VERIFY(m_stamp <= 0x000000FFFFFFFFFF);
 }
+
+void TRIA_Stamp::print() {
+  Serial.print("0x");
+  Serial.print((uint32_t)(m_stamp >> 32), HEX);
+  Serial.print((uint32_t)(m_stamp & 0xffffffff), HEX);
+}

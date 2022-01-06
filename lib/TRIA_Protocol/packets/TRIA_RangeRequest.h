@@ -28,6 +28,5 @@ public:
     };
   };
 
-  void print();
   TRIA_Stamp get_rx_stamp() { return *(TRIA_Stamp *)m_fields.at(rx_stamp_position); }
 };

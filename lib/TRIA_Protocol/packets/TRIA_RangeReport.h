@@ -34,7 +34,7 @@ public:
     };
   };
 
-  void print();
+  void print() override;
   TRIA_Stamp get_rx_stamp() { return *(TRIA_Stamp *)m_fields.at(rx_stamp_position); }
   TRIA_Stamp get_tx_stamp() { return *(TRIA_Stamp *)m_fields.at(tx_stamp_position); }
 };
