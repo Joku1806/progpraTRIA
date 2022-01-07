@@ -10,6 +10,9 @@ TRIA_ID id = TRIA_ID(tracker, 2);
 DW3000_Interface interface;
 TRIA_RangeReport report;
 
+TRIA_RangeRequest request;
+TRIA_RangeResponse response;
+
 void receive_handler(const dwt_cb_data_t *cb_data) {
   Serial.println("Habe Paket bekommen!");
   auto got_report = interface.handle_incoming_packet(cb_data->datalength, report);
@@ -30,12 +33,12 @@ void setup() {
   Serial.begin(9600);
   while (!Serial) {}
   interface = DW3000_Interface(id, receive_handler);
+  request = TRIA_RangeRequest(id, TRIA_ID(tracker_coordinator, 0));
+  response = TRIA_RangeResponse(TRIA_ID(tracker_coordinator, 41), id, TRIA_Stamp(0x7d61226244));
 }
 
 void loop() {
 #ifdef SENDER
-  auto request = TRIA_RangeRequest(id, TRIA_ID(tracker_coordinator, 0));
-  auto response = TRIA_RangeResponse(TRIA_ID(tracker_coordinator, 41), id, TRIA_Stamp(0x7d61226244));
   Serial.printf("Feldadressen von request (%p): ", &request);
   request.print_field_addresses();
   Serial.print("\n");
