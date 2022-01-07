@@ -39,16 +39,9 @@ void setup() {
 
 void loop() {
 #ifdef SENDER
-  Serial.printf("Feldadressen von request (%p): ", &request);
-  request.print_field_addresses();
-  Serial.print("\n");
-  Serial.printf("Feldadressen von response (%p): ", &response);
-  response.print_field_addresses();
-  Serial.print("\n");
-  // request.print();
-  // interface.send_packet(&request);
-  // delay(1000);
-  // interface.send_packet(&response);
+  interface.send_packet(&request);
+  delay(1000);
+  interface.send_packet(&response);
   delay(1000);
 #endif
 }
