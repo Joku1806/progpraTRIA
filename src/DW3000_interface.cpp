@@ -62,10 +62,6 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
 }
 
 void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
-  Serial.print("Innerhalb Funktion: ");
-  packet->print();
-  Serial.print("\n");
-
   VERIFY(!packet->is_type(range_report));
   // TODO: Wird das hier überhaupt gebraucht?
   while (dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK) {}
