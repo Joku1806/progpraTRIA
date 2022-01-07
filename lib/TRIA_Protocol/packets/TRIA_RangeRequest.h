@@ -19,12 +19,15 @@ public:
 
   TRIA_RangeRequest(TRIA_ID sid, TRIA_ID rid) {
     auto a = TRIA_Action(range_request);
+    Serial.printf("Adresse von a: %p\n", &a);
 
     m_fields[0] = (TRIA_Field *)&a;
     m_fields[1] = (TRIA_Field *)&sid;
     m_fields[2] = (TRIA_Field *)&rid;
 
-    Serial.printf("Adresse m_fields (request) = %p\n", &m_fields);
+    Serial.print("(RangeRequest) Feldadressen direkt nach Initialisierung: \n");
+    print_field_addresses();
+    Serial.print("\n");
   };
 
   size_t field_count() override { return FIELD_COUNT; }

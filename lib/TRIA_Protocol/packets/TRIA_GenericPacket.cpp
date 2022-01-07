@@ -43,3 +43,10 @@ void TRIA_GenericPacket::print() {
     Serial.print(" | ");
   }
 }
+
+void TRIA_GenericPacket::print_field_addresses() {
+  Serial.printf("(%u Felder) | ", field_count());
+  for (size_t i = 0; i < field_count(); i++) {
+    Serial.printf("%p | ", m_fields[i]);
+  }
+}

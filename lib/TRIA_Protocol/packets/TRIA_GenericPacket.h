@@ -31,6 +31,7 @@ public:
   void initialise_from_buffer(uint8_t *buffer) override;
   void print() override;
 
+  void print_field_addresses();
   virtual size_t field_count() = 0;
 
 protected:

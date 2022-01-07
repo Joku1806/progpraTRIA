@@ -31,7 +31,9 @@ public:
     m_fields[3] = (TRIA_Field *)&rx;
     m_fields[4] = (TRIA_Field *)&unset_tx;
 
-    Serial.printf("Adresse m_fields (response) = %p\n", &m_fields);
+    Serial.print("(RangeResponse) Feldadressen direkt nach Initialisierung: \n");
+    print_field_addresses();
+    Serial.print("\n");
   };
 
   size_t field_count() override { return FIELD_COUNT; }
