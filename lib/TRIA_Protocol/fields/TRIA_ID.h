@@ -5,6 +5,7 @@
 enum TRIA_dev_type {
   tracker = 1 << 7,
   coordinator = 1 << 6,
+  tracker_coordinator = tracker | coordinator,
   trackee = 1 << 5,
 };
 

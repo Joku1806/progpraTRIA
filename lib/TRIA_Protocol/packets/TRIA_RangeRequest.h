@@ -18,7 +18,7 @@ public:
     };
   };
 
-  TRIA_RangeRequest(const TRIA_ID &sid, const TRIA_ID &rid) {
+  TRIA_RangeRequest(const TRIA_ID sid, const TRIA_ID rid) {
     auto a = TRIA_Action(range_request);
 
     m_fields = {
@@ -27,6 +27,4 @@ public:
         (TRIA_Field *)&rid,
     };
   };
-
-  TRIA_Stamp get_rx_stamp() { return *(TRIA_Stamp *)m_fields.at(rx_stamp_position); }
 };

@@ -15,13 +15,13 @@ public:
   // größer machen, bis VERIFY in send_packet()
   // nicht mehr getriggert wird.
   // FIXME: rausfinden welche Einheit das ist
-  static const uint32_t SEND_DELAY = 1000;
+  static const uint32_t SEND_DELAY = 100;
 
   DW3000_Interface() {};
   DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data));
 
   bool handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out);
-  void send_packet(TRIA_GenericPacket &packet);
+  void send_packet(TRIA_GenericPacket *packet);
 
 private:
   TRIA_ID m_id;

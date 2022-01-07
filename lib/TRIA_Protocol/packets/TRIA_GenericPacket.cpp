@@ -37,7 +37,7 @@ void TRIA_GenericPacket::initialise_from_buffer(uint8_t *buffer) {
 }
 
 void TRIA_GenericPacket::print() {
-  Serial.print("| ");
+  Serial.printf("(%u Felder) | ", m_fields.size());
   for (auto field : m_fields) {
     field->print();
     Serial.print(" | ");

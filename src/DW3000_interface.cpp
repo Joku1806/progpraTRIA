@@ -49,7 +49,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
 
   if (received->is_type(range_request)) {
     auto response = TRIA_RangeResponse(received->received_from(), m_id, m_rx_stamp);
-    send_packet(response);
+    send_packet(&response);
     return false;
   } else {
     // FIXME: irgendwie ohne hässlichen Cast hinkriegen
@@ -61,32 +61,53 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   }
 }
 
-void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
-  VERIFY(!packet.is_type(range_report));
+void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
+  Serial.print("Innerhalb Funktion: ");
+  packet->print();
+  Serial.print("\n");
+
+  VERIFY(!packet->is_type(range_report));
   // TODO: Wird das hier überhaupt gebraucht?
-  // while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK)) {}
-  Serial.println("Sende Packet:");
-  packet.print();
+  while (dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK) {}
 
-  packet.pack_into(m_packet_buffer);
-  VERIFY(dwt_writetxdata(packet.packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
-  dwt_writetxfctrl(packet.packed_size() + FCS_LEN, 0, 0);
+  packet->pack_into(m_packet_buffer);
+  VERIFY(dwt_writetxdata(packet->packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
+  dwt_writetxfctrl(packet->packed_size() + FCS_LEN, 0, 0);
 
-  if (packet.is_type(range_request)) {
+  if (packet->is_type(range_request)) {
+    VERIFY(packet->packed_size() == TRIA_RangeRequest::PACKED_SIZE);
+    Serial.println("Paket ist eine Range Request, versende im Immediate Modus.");
     dwt_starttx(DWT_START_TX_IMMEDIATE);
     dwt_readtxtimestamp(m_stamp_buffer);
     m_tx_stamp.initialise_from_buffer(m_stamp_buffer);
-  } else if (packet.is_type(range_response)) {
+  } else if (packet->is_type(range_response)) {
+    VERIFY(packet->packed_size() == TRIA_RangeResponse::PACKED_SIZE);
+    Serial.println("Paket ist eine Range Response, versende im Delayed Modus, damit Absendezeit in Paket eingetragen werden kann.");
     uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
-    uint32_t sys_time = dwt_readsystimestamphi32();
-    uint32_t send_time_hi32 = sys_time + SEND_DELAY;
+    uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
+    uint32_t send_time_hi32 = sys_time_hi32 + SEND_DELAY;
     auto tx = TRIA_Stamp((send_time_hi32 << 8) + antenna_delay);
-    ((TRIA_RangeResponse *)&packet)->set_tx_stamp(tx);
-    VERIFY(send_time_hi32 < dwt_readsystimestamphi32());
+    (static_cast<TRIA_RangeResponse *>(packet))->set_tx_stamp(tx);
+    Serial.printf("Sende um %u, Systemzeit ist im Moment %u.\n", send_time_hi32, dwt_readsystimestamphi32());
+    // FIXME: Könnte Problem geben, wenn systimer zwischen Berechnungen auf 0 zurückgesetzt wird.
+    // Aber ka ob das überhaupt passieren kann.
+    VERIFY(send_time_hi32 > dwt_readsystimestamphi32());
     dwt_setdelayedtrxtime(send_time_hi32);
     dwt_starttx(DWT_START_TX_DELAYED);
   }
 
   // FIXME: Kann es passieren, dass etwas gesendet wird, während delayed tx noch aktiv ist?
   dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_TX);
+
+  Serial.println("Paket wurde versendet.");
+  Serial.print("Gesendetes Paket: ");
+  packet->print();
+  Serial.print("\n");
+
+  Serial.printf("Netzwerkrepräsentation (%u Bytes):", packet->packed_size());
+  for (size_t i = 0; i < packet->packed_size(); i++) {
+    Serial.print(" 0x");
+    Serial.print(m_packet_buffer[i], HEX);
+  }
+  Serial.print("\n");
 }

@@ -45,18 +45,18 @@ void TRIA_ID::print() {
     Serial.print("Anycast");
   } else {
     for (size_t i = 0; i < 3; i++) {
-      switch (type() << (5 + i)) {
-        case coordinator: Serial.print("Coordinator");
-        case tracker: Serial.print("Tracker");
-        case trackee: Serial.print("Trackee");
+      switch (type() & (1 << (5 + i))) {
+        case coordinator: Serial.print("Coordinator"); break;
+        case tracker: Serial.print("Tracker"); break;
+        case trackee: Serial.print("Trackee"); break;
       }
 
-      if (i != 2 && ((uint8_t)type() & (1 << (5 + i)))) {
+      if (i != 2 && (type() & (1 << (5 + i)))) {
         Serial.print("/");
       }
     }
   }
 
-  Serial.print(" 0x");
+  Serial.print(" mit id=0x");
   Serial.print(id(), HEX);
 }
