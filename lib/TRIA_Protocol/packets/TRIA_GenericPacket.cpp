@@ -7,13 +7,13 @@ bool TRIA_GenericPacket::is_addressed_to(TRIA_ID id) {
 }
 
 bool TRIA_GenericPacket::is_type(action a) {
-  return ((TRIA_Action *)m_fields.at(action_position))->value() == a;
+  return ((TRIA_Action *)m_fields[action_position])->value() == a;
 }
 
 size_t TRIA_GenericPacket::pack_into(uint8_t *bytes) {
   size_t offset = 0;
-  for (auto field : m_fields) {
-    offset += field->pack_into(bytes + offset);
+  for (size_t i = 0; i < field_count(); i++) {
+    offset += m_fields[i]->pack_into(bytes + offset);
   }
 
   VERIFY(offset == packed_size());
@@ -22,24 +22,24 @@ size_t TRIA_GenericPacket::pack_into(uint8_t *bytes) {
 
 size_t TRIA_GenericPacket::packed_size() {
   size_t size = 0;
-  for (auto field : m_fields) {
-    size += field->packed_size();
+  for (size_t i = 0; i < field_count(); i++) {
+    size += m_fields[i]->packed_size();
   }
 
   return size;
 }
 
 void TRIA_GenericPacket::initialise_from_buffer(uint8_t *buffer) {
-  for (auto field : m_fields) {
-    field->initialise_from_buffer(buffer);
-    buffer += field->packed_size();
+  for (size_t i = 0; i < field_count(); i++) {
+    m_fields[i]->initialise_from_buffer(buffer);
+    buffer += m_fields[i]->packed_size();
   }
 }
 
 void TRIA_GenericPacket::print() {
-  Serial.printf("(%u Felder) | ", m_fields.size());
-  for (auto field : m_fields) {
-    field->print();
+  Serial.printf("(%u Felder) | ", field_count());
+  for (size_t i = 0; i < field_count(); i++) {
+    m_fields[i]->print();
     Serial.print(" | ");
   }
 }

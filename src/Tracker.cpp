@@ -35,9 +35,10 @@ void setup() {
 void loop() {
 #ifdef SENDER
   auto request = TRIA_RangeRequest(id, TRIA_ID(tracker_coordinator, 0));
-  auto response = TRIA_RangeResponse(TRIA_ID(tracker_coordinator, 41), id, TRIA_Stamp(0x7d61226244));
-  request.print();
-  // interface.send_packet(&request);
+  // auto response = TRIA_RangeResponse(TRIA_ID(tracker_coordinator, 41), id, TRIA_Stamp(0x7d61226244));
+  // Serial.printf("Adresse Request = %p, Adresse Response = %p\n", request, response);
+  // request.print();
+  interface.send_packet(&request);
   // delay(1000);
   // interface.send_packet(&response);
   delay(1000);
