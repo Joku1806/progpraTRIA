@@ -2,9 +2,7 @@
 #include <lib/assertions.h>
 #include <packets/TRIA_GenericPacket.h>
 
-bool TRIA_GenericPacket::is_addressed_to(TRIA_ID id) {
-  return id.matches_mask(sent_to());
-}
+bool TRIA_GenericPacket::is_addressed_to(TRIA_ID id) { return id.matches_mask(sent_to()); }
 
 bool TRIA_GenericPacket::is_type(action a) {
   return ((TRIA_Action *)m_fields[action_position])->value() == a;
@@ -37,8 +35,10 @@ void TRIA_GenericPacket::initialise_from_buffer(uint8_t *buffer) {
 }
 
 void TRIA_GenericPacket::print() {
+  const char *field_labels[FIELD_COUNT] = {"Typ", "Von", "An", "RX", "TX"};
   Serial.printf("(%u Felder) | ", field_count());
   for (size_t i = 0; i < field_count(); i++) {
+    Serial.printf("%s: ", field_labels[i]);
     m_fields[i]->print();
     Serial.print(" | ");
   }
