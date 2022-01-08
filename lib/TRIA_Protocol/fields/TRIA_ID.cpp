@@ -57,6 +57,8 @@ void TRIA_ID::print() {
     }
   }
 
-  Serial.print(" mit id=0x");
-  Serial.print(id(), HEX);
+  if (id() != 0) {
+    Serial.print(" mit id=0x");
+    Serial.print(id(), HEX);
+  }
 }

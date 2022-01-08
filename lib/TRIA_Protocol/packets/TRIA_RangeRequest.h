@@ -20,10 +20,6 @@ public:
     m_fields[0] = (TRIA_Field *)&m_action;
     m_fields[1] = (TRIA_Field *)&m_sender_id;
     m_fields[2] = (TRIA_Field *)&m_receiver_id;
-
-    Serial.printf("(RangeRequest@%p) Feldadressen direkt nach Initialisierung: \n", this);
-    print_field_addresses();
-    Serial.print("\n");
   };
 
   size_t field_count() override { return FIELD_COUNT; }

@@ -28,15 +28,15 @@ public:
     m_fields[2] = (TRIA_Field *)&m_receiver_id;
     m_fields[3] = (TRIA_Field *)&m_rx_stamp;
     m_fields[4] = (TRIA_Field *)&m_tx_stamp;
-
-    Serial.printf("(RangeResponse@%p) Feldadressen direkt nach Initialisierung: \n", this);
-    print_field_addresses();
-    Serial.print("\n");
   };
 
   size_t field_count() override { return FIELD_COUNT; }
 
-  void set_tx_stamp(const TRIA_Stamp &tx) { m_tx_stamp = tx; }
+  void set_tx_stamp(const TRIA_Stamp &tx) {
+    m_tx_stamp = tx;
+    m_fields[tx_stamp_position] = &m_tx_stamp;
+  }
+
   TRIA_Stamp get_rx_stamp() { return m_rx_stamp; }
   TRIA_Stamp get_tx_stamp() { return m_tx_stamp; }
 
