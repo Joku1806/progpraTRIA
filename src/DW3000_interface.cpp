@@ -122,5 +122,5 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     Serial.print(" 0x");
     Serial.print(m_packet_buffer[i], HEX);
   }
-  Serial.print("\n");
+  Serial.print("\n\n");
 }
