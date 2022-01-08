@@ -5,12 +5,15 @@
 
 #include <Arduino.h>
 
-#define VERIFY(expression)                                                             \
-  do {                                                                                 \
-    if (!(expression)) {                                                               \
-      Serial.printf("ASSERTION FAILED: %s in %s:%u", #expression, __FILE__, __LINE__); \
-      exit(EXIT_FAILURE);                                                              \
-    }                                                                                  \
+#define VERIFY(expression)                                                                         \
+  do {                                                                                             \
+    if (!(expression)) {                                                                           \
+      Serial.print("ASSERTION FAILED: " #expression);                                              \
+      Serial.print(" in " __FILE__ ":");                                                           \
+      Serial.print(__LINE__);                                                                      \
+      Serial.flush();                                                                              \
+      exit(EXIT_FAILURE);                                                                          \
+    }                                                                                              \
   } while (0)
 
 #define VERIFY_NOT_REACHED() VERIFY(false)

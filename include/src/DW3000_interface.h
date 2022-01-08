@@ -11,11 +11,10 @@ class DW3000_Interface {
 public:
   static const size_t SPI_SLOWRATE = 4500000;
   static const size_t SPI_FASTRATE = 10000000;
-  // random Wert, noch nicht getestet
-  // größer machen, bis VERIFY in send_packet()
+  // so groß, dass das VERIFY in send_packet()
   // nicht mehr getriggert wird.
-  // FIXME: rausfinden welche Einheit das ist
-  static const uint32_t SEND_DELAY = 100;
+  // glaube in Einheit von 8ns => ~0.32ms delay
+  static const uint32_t SEND_DELAY = 40000;
 
   DW3000_Interface() {};
   DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data));
