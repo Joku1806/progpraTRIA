@@ -11,6 +11,7 @@ size_t TRIA_Action::pack_into(uint8_t *bytes) {
 size_t TRIA_Action::packed_size() { return PACKED_SIZE; }
 
 void TRIA_Action::initialise_from_buffer(uint8_t *buffer) {
+  Serial.println("Initialising action from buffer.");
   m_action = (action)*buffer;
 }
 

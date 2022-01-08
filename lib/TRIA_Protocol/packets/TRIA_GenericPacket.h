@@ -18,7 +18,8 @@ enum field_positions {
 class TRIA_GenericPacket : public TRIA_Field {
 public:
   // gehe von größtem Paket aus
-  static const size_t PACKED_SIZE = TRIA_Action::PACKED_SIZE + 2 * TRIA_ID::PACKED_SIZE + 2 * TRIA_Stamp::PACKED_SIZE;
+  static const size_t PACKED_SIZE =
+      TRIA_Action::PACKED_SIZE + 2 * TRIA_ID::PACKED_SIZE + 2 * TRIA_Stamp::PACKED_SIZE;
   static const size_t FIELD_COUNT = 5;
 
   bool is_type(action a);
@@ -31,9 +32,10 @@ public:
   void initialise_from_buffer(uint8_t *buffer) override;
   void print() override;
 
-  void print_field_addresses();
-  virtual size_t field_count() = 0;
+  void print_addresses();
 
 protected:
   TRIA_Field *m_fields[FIELD_COUNT];
+  virtual void overwrite_fields() = 0;
+  virtual size_t field_count() = 0;
 };

@@ -3,15 +3,13 @@
 #include <src/Tracker.h>
 
 #ifdef SENDER
-TRIA_ID id = TRIA_ID(tracker, 1);
+TRIA_ID id = TRIA_ID(tracker_coordinator, 25);
 #else
 TRIA_ID id = TRIA_ID(tracker, 2);
 #endif
 DW3000_Interface interface;
 
-TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(tracker_coordinator, 0));
-TRIA_RangeResponse response =
-    TRIA_RangeResponse(TRIA_ID(tracker_coordinator, 41), id, TRIA_Stamp(0x7d61226244));
+TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(tracker, 0));
 TRIA_RangeReport report;
 
 void receive_handler(const dwt_cb_data_t *cb_data) {
@@ -36,20 +34,18 @@ void setup() {
   while (!Serial) {}
   interface = DW3000_Interface(id, receive_handler);
 
-  Serial.printf("(RangeRequest@%p) ", &request);
-  request.print_field_addresses();
-  Serial.print("\n");
-
-  Serial.printf("(RangeResponse@%p) ", &response);
-  response.print_field_addresses();
-  Serial.print("\n");
+  request.print_addresses();
+  report.print_addresses();
 }
 
 void loop() {
 #ifdef SENDER
   interface.send_packet(&request);
   delay(1000);
-  interface.send_packet(&response);
+  interface.receive_packet_mock(TRIA_RangeRequest::PACKED_SIZE + 2, report);
+  delay(1000);
+  interface.receive_packet_mock(TRIA_RangeResponse::PACKED_SIZE + 2, report);
+  report.print();
   delay(1000);
 #endif
 }

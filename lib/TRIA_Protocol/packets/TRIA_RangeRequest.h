@@ -9,23 +9,40 @@ public:
 
   TRIA_RangeRequest()
     : m_action(TRIA_Action(range_request)), m_sender_id(TRIA_ID()), m_receiver_id(TRIA_ID()) {
-
-    m_fields[0] = (TRIA_Field *)&m_action;
-    m_fields[1] = (TRIA_Field *)&m_sender_id;
-    m_fields[2] = (TRIA_Field *)&m_receiver_id;
+    overwrite_fields();
   };
 
   TRIA_RangeRequest(const TRIA_ID &sid, const TRIA_ID &rid)
     : m_action(TRIA_Action(range_request)), m_sender_id(sid), m_receiver_id(rid) {
-    m_fields[0] = (TRIA_Field *)&m_action;
-    m_fields[1] = (TRIA_Field *)&m_sender_id;
-    m_fields[2] = (TRIA_Field *)&m_receiver_id;
+    overwrite_fields();
   };
 
-  size_t field_count() override { return FIELD_COUNT; }
+  TRIA_RangeRequest(const TRIA_RangeRequest &other)
+    : m_action(other.m_action), m_sender_id(other.m_sender_id), m_receiver_id(other.m_receiver_id) {
+    overwrite_fields();
+  }
+
+  TRIA_RangeRequest &operator=(const TRIA_RangeRequest &other) {
+    m_action = other.m_action;
+    m_sender_id = other.m_sender_id;
+    m_receiver_id = other.m_receiver_id;
+
+    overwrite_fields();
+    return *this;
+  }
+
+  ~TRIA_RangeRequest() {}
 
 private:
   TRIA_Action m_action;
   TRIA_ID m_sender_id;
   TRIA_ID m_receiver_id;
+
+  void overwrite_fields() override {
+    m_fields[action_position] = (TRIA_Field *)&m_action;
+    m_fields[sender_id_position] = (TRIA_Field *)&m_sender_id;
+    m_fields[receiver_id_position] = (TRIA_Field *)&m_receiver_id;
+  }
+
+  size_t field_count() override { return FIELD_COUNT; }
 };

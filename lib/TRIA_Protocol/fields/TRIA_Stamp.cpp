@@ -1,7 +1,8 @@
+#include <Arduino.h>
+#include <cstring>
 #include <fields/TRIA_Stamp.h>
 #include <inttypes.h>
 #include <lib/assertions.h>
-#include <string>
 
 void TRIA_Stamp::set_value(uint64_t stamp) {
   VERIFY(stamp <= 0x000000FFFFFFFFFF);
@@ -37,6 +38,7 @@ size_t TRIA_Stamp::pack_into(uint8_t *bytes) {
 size_t TRIA_Stamp::packed_size() { return PACKED_SIZE; }
 
 void TRIA_Stamp::initialise_from_buffer(uint8_t *buffer) {
+  Serial.println("Initialising stamp from buffer.");
   uint64_t stamp_nb = 0;
   memcpy(&stamp_nb, buffer, PACKED_SIZE);
   // FIXME: Muss das erst nach dem Byteswap gemacht werden?
