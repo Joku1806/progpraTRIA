@@ -17,7 +17,11 @@ public:
   static const uint32_t SEND_DELAY = 40000;
 
   DW3000_Interface() {};
-  DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data));
+  DW3000_Interface(TRIA_ID &id, void (*tx_handler)(const dwt_cb_data_t *cb_data),
+                   void (*recv_handler)(const dwt_cb_data_t *cb_data));
+
+  void save_rx_stamp();
+  void save_tx_stamp();
 
   bool handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out);
   bool receive_packet_mock(size_t received_bytes, TRIA_RangeReport &out);

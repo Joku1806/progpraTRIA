@@ -5,13 +5,23 @@
 #include <platform/deca_spi.h>
 #include <src/DW3000_interface.h>
 
-DW3000_Interface::DW3000_Interface(TRIA_ID &id,
+DW3000_Interface::DW3000_Interface(TRIA_ID &id, void (*tx_handler)(const dwt_cb_data_t *cb_data),
                                    void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
   m_id = id;
   // Reihenfolge ist hier wichtig, nicht ändern!
   DWIC_reset();
   DWIC_configure_spi(SPI_FASTRATE);
-  DWIC_configure_interrupts(recv_handler);
+  DWIC_configure_interrupts(tx_handler, recv_handler);
+}
+
+void DW3000_Interface::save_rx_stamp() {
+  dwt_readrxtimestamp(m_stamp_buffer);
+  m_rx_stamp.initialise_from_buffer_no_bswap(m_stamp_buffer);
+}
+
+void DW3000_Interface::save_tx_stamp() {
+  dwt_readtxtimestamp(m_stamp_buffer);
+  m_tx_stamp.initialise_from_buffer_no_bswap(m_stamp_buffer);
 }
 
 bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out) {
@@ -37,8 +47,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
     return false;
   }
 
-  dwt_readrxtimestamp(m_stamp_buffer);
-  m_rx_stamp.initialise_from_buffer_no_bswap(m_stamp_buffer);
+  save_rx_stamp();
 
   TRIA_GenericPacket *received;
   switch (a.value()) {
@@ -170,9 +179,6 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     dwt_setdelayedtrxtime(send_time_hi32);
     dwt_starttx(DWT_START_TX_DELAYED);
   }
-
-  // FIXME: Kann es passieren, dass etwas gesendet wird, während delayed tx noch aktiv ist?
-  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_TX);
 
 #ifdef DEBUG
   Serial.print("Versendetes Paket: ");

@@ -1,3 +1,4 @@
+#include <decadriver/deca_regs.h>
 #include <platform/pin_mappings.h>
 #include <src/DW3000_interface.h>
 #include <src/Tracker.h>
@@ -12,7 +13,8 @@ DW3000_Interface interface;
 TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(tracker, 0));
 TRIA_RangeReport report;
 
-void receive_handler(const dwt_cb_data_t *cb_data) {
+// FIXME: Sollten wahrscheinlich Teil von DW3000_Interface sein
+void recv_handler(const dwt_cb_data_t *cb_data) {
   Serial.println("Habe Paket bekommen!");
   auto got_report = interface.handle_incoming_packet(cb_data->datalength, report);
   if (!got_report) {
@@ -20,6 +22,13 @@ void receive_handler(const dwt_cb_data_t *cb_data) {
   }
 
   report.print();
+}
+
+void tx_handler(const dwt_cb_data_t *cb_data) {
+  Serial.println("Paket wurde gesendet!");
+  (void)cb_data;
+  interface.save_tx_stamp();
+  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_TX);
 }
 
 void setup() {
@@ -32,7 +41,7 @@ void setup() {
   SPI.begin();
   Serial.begin(9600);
   while (!Serial) {}
-  interface = DW3000_Interface(id, receive_handler);
+  interface = DW3000_Interface(id, tx_handler, recv_handler);
 }
 
 void loop() {

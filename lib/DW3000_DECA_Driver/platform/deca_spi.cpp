@@ -1,4 +1,5 @@
 #include <SPI.h>
+#include <decadriver/deca_regs.h>
 #include <lib/assertions.h>
 #include <platform/deca_spi.h>
 #include <platform/pin_mappings.h>
@@ -41,17 +42,21 @@ void DWIC_configure_spi(size_t spi_rate) {
   DWIC_set_spi_rate(spi_rate);
 }
 
-void DWIC_configure_interrupts(void (*recv_callback)(const dwt_cb_data_t *cb_data)) {
-  dwt_setcallbacks(nullptr, recv_callback, nullptr, nullptr, nullptr, nullptr);
-  // TODO: schauen ob dieser Pin Mode richtig ist
+void DWIC_configure_interrupts(void (*tx_handler)(const dwt_cb_data_t *cb_data),
+                               void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
+  dwt_setcallbacks(tx_handler, recv_handler, NULL, NULL, NULL, NULL);
+  dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0,
+                   DWT_ENABLE_INT);
+  // TODO: richtigen Pin Mode herausfinden
   pinMode(SPI_interrupt, INPUT_PULLUP);
-  attachInterrupt(SPI_interrupt, dwt_isr, HIGH);
+  attachInterrupt(digitalPinToInterrupt(SPI_interrupt), dwt_isr, HIGH);
 
   // sofort Verbindungen annehmen
   dwt_writefastCMD(CMD_RX);
 }
 
-int writetospiwithcrc(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t bodyLength, const uint8_t *bodyBuffer, uint8_t crc8) {
+int writetospiwithcrc(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t bodyLength,
+                      const uint8_t *bodyBuffer, uint8_t crc8) {
   SPI.beginTransaction(spi_settings);
   digitalWrite(SPI_chipselect, LOW);
 
@@ -71,10 +76,10 @@ int writetospiwithcrc(uint16_t headerLength, const uint8_t *headerBuffer, uint16
   return 0;
 }
 
-int writetospi(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t bodyLength, const uint8_t *bodyBuffer) {
+int writetospi(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t bodyLength,
+               const uint8_t *bodyBuffer) {
   SPI.beginTransaction(spi_settings);
   digitalWrite(SPI_chipselect, LOW);
-
 
   for (size_t i = 0; i < headerLength; i++) {
     SPI.transfer(headerBuffer[i]);
@@ -90,7 +95,8 @@ int writetospi(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t body
   return 0;
 }
 
-int readfromspi(uint16_t headerLength, uint8_t *headerBuffer, uint16_t readlength, uint8_t *readBuffer) {
+int readfromspi(uint16_t headerLength, uint8_t *headerBuffer, uint16_t readlength,
+                uint8_t *readBuffer) {
   SPI.beginTransaction(spi_settings);
   digitalWrite(SPI_chipselect, LOW);
 
