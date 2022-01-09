@@ -28,13 +28,8 @@ size_t TRIA_GenericPacket::packed_size() {
 }
 
 void TRIA_GenericPacket::initialise_from_buffer(uint8_t *buffer) {
-  Serial.printf("Initialising packet@%p from buffer.\n", this);
   for (size_t i = 0; i < field_count(); i++) {
-    Serial.printf("Initialising field %u, @%p\n", i, m_fields[i]);
     m_fields[i]->initialise_from_buffer(buffer);
-    Serial.print("Initialised field to: ");
-    m_fields[i]->print();
-    Serial.print("\n");
     buffer += m_fields[i]->packed_size();
   }
 }

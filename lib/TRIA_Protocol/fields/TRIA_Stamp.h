@@ -18,6 +18,8 @@ public:
   void initialise_from_buffer(uint8_t *buffer) override;
   void print() override;
 
+  void initialise_from_buffer_no_bswap(uint8_t *buffer);
+
 private:
   uint64_t m_stamp;
 };

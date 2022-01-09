@@ -33,9 +33,6 @@ void setup() {
   Serial.begin(9600);
   while (!Serial) {}
   interface = DW3000_Interface(id, receive_handler);
-
-  request.print_addresses();
-  report.print_addresses();
 }
 
 void loop() {

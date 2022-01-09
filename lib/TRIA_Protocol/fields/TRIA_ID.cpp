@@ -38,10 +38,7 @@ size_t TRIA_ID::pack_into(uint8_t *bytes) {
 
 size_t TRIA_ID::packed_size() { return PACKED_SIZE; }
 
-void TRIA_ID::initialise_from_buffer(uint8_t *buffer) {
-  Serial.println("Initialising id from buffer.");
-  m_id = *buffer;
-}
+void TRIA_ID::initialise_from_buffer(uint8_t *buffer) { m_id = *buffer; }
 
 void TRIA_ID::print() {
   if (type() == 0) {
