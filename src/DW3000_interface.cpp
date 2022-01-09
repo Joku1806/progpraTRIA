@@ -78,6 +78,9 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
 // werden, die der vorherige send_packet() call in m_packet_buffer
 // geschrieben hat. Außerdem wird die Systemzeit als rx stamp benutzt.
 bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeReport &out) {
+  uint64_t mocked_recv = static_cast<uint64_t>(dwt_readsystimestamphi32()) << 8;
+  m_rx_stamp.initialise_from_buffer_no_bswap((uint8_t *)(&mocked_recv));
+
   VERIFY(received_bytes - FCS_LEN <= TRIA_GenericPacket::PACKED_SIZE);
 
   TRIA_Action a;
@@ -98,9 +101,6 @@ bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeRepo
                       SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
     return false;
   }
-
-  uint64_t mocked_recv = static_cast<uint64_t>(dwt_readsystimestamphi32()) << 8;
-  m_rx_stamp.initialise_from_buffer_no_bswap((uint8_t *)(&mocked_recv));
 
   TRIA_GenericPacket *received = nullptr;
   switch (a.value()) {
@@ -148,21 +148,16 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     packet->pack_into(m_packet_buffer);
     VERIFY(dwt_writetxdata(packet->packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
     dwt_writetxfctrl(packet->packed_size() + FCS_LEN, 0, 0);
-
-    dwt_starttx(DWT_START_TX_IMMEDIATE);
-    dwt_readtxtimestamp(m_stamp_buffer);
-    m_tx_stamp.initialise_from_buffer_no_bswap(m_stamp_buffer);
+    dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
   } else if (packet->is_type(range_response)) {
     VERIFY(packet->packed_size() == TRIA_RangeResponse::PACKED_SIZE);
 #ifdef DEBUG
     Serial.println("Paket ist eine Range Response, versende im Delayed Modus, damit Absendezeit in "
                    "Paket eingetragen werden kann.");
 #endif
-    // FIXME: Warum ist TX hier kleiner als RX?
     uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
     uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
-    // FIXME: möglicher overflow?
-    uint32_t send_time_hi32 = sys_time_hi32 + SEND_DELAY;
+    uint64_t send_time_hi32 = sys_time_hi32 + SEND_DELAY;
     auto tx = TRIA_Stamp((send_time_hi32 << 8) + antenna_delay);
     (static_cast<TRIA_RangeResponse *>(packet))->set_tx_stamp(tx);
 

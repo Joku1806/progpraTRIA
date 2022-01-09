@@ -8,8 +8,15 @@ void TRIA_RangeReport::print() {
     Serial.print(" | ");
   }
 
-  size_t c_air = 299702458;
+  double c_air = 299702458.0;
   TRIA_Stamp dt = get_rx_stamp() - get_tx_stamp();
-  float distance = dt.value() / 2.0 * c_air;
-  Serial.printf("Distanz von Unit %u nach Unit %u: %fm\n", received_from(), sent_to(), distance);
+  Serial.print(dt.value() / 2.0);
+  double distance = dt.value() / 2.0 * c_air;
+  Serial.print("Distanz von ");
+  received_from().print();
+  Serial.print(" nach ");
+  sent_to().print();
+  Serial.print(" ist ");
+  Serial.print(distance);
+  Serial.print("m.\n");
 }
