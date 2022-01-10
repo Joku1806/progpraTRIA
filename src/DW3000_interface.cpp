@@ -78,6 +78,9 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
 // werden, die der vorherige send_packet() call in m_packet_buffer
 // geschrieben hat. Außerdem wird die Systemzeit als rx stamp benutzt.
 bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeReport &out) {
+#ifndef DEBUG
+  unsigned long start_us = micros();
+#endif
   uint64_t mocked_recv = static_cast<uint64_t>(dwt_readsystimestamphi32()) << 8;
   m_rx_stamp.initialise_from_buffer_no_bswap((uint8_t *)(&mocked_recv));
 
@@ -109,35 +112,60 @@ bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeRepo
     default: VERIFY_NOT_REACHED();
   }
   received->initialise_from_buffer(m_packet_buffer);
+  // FIXME: Eigentlich braucht man nur SYS_STATUS_ALL_RX_GOOD, weil diese Funktion nur bei diesem
+  // Event aufgerufen wird.
   dwt_write32bitreg(SYS_STATUS_ID,
                     SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
 
+#ifdef DEBUG
   Serial.print("Habe Paket bekommen: ");
   received->print();
   Serial.print("\n");
+#endif
 
   if (received->is_type(range_request)) {
+#ifdef DEBUG
     Serial.println("Paket ist eine Range Request, verschicke Antwort mit rx und tx.");
+#endif
+
     auto response = TRIA_RangeResponse(m_id, received->received_from(), m_rx_stamp);
     send_packet(&response);
+
+#ifndef DEBUG
+    unsigned long end_us = micros();
+    Serial.printf("Benchmark (recv request) = %uus\n\n", end_us - start_us);
+#else
+    Serial.print("\n");
+#endif
+
     return false;
   } else {
+#ifdef DEBUG
     Serial.println("Paket ist eine Range Response, passe ToF anhand gesendetem rx und tx an.");
+#endif
+
     TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
     TRIA_Stamp measured_tx = static_cast<TRIA_RangeResponse *>(received)->get_tx_stamp();
     m_rx_stamp = m_rx_stamp - (measured_tx - measured_rx);
     out = TRIA_RangeReport(received->received_from(), m_id, m_rx_stamp, m_tx_stamp);
+
+#ifndef DEBUG
+    unsigned long end_us = micros();
+    Serial.printf("Benchmark (recv response) = %uus\n\n", end_us - start_us);
+#else
+    Serial.print("\n");
+#endif
+
     return true;
   }
 }
 
 void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
-#ifdef DEBUG
+#ifndef DEBUG
   unsigned long start_us = micros();
 #endif
 
   VERIFY(!packet->is_type(range_report));
-  // TODO: Wird das hier überhaupt gebraucht?
   while (dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK) {}
 
   if (packet->is_type(range_request)) {
@@ -186,8 +214,12 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     Serial.print(m_packet_buffer[i], HEX);
   }
   Serial.print("\n");
+#endif
 
+#ifndef DEBUG
   unsigned long end_us = micros();
-  Serial.printf("Benchmark = %uus\n\n", end_us - start_us);
+  Serial.printf("Benchmark (send) = %uus\n\n", end_us - start_us);
+#else
+  Serial.print("\n");
 #endif
 }

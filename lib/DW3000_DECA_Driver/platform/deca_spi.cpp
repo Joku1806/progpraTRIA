@@ -111,20 +111,13 @@ int readfromspi(uint16_t headerLength, uint8_t *headerBuffer, uint16_t readlengt
   SPI.beginTransaction(spi_settings);
   digitalWrite(SPI_chipselect, LOW);
 
-  // Serial.print("Sende Command:");
   for (size_t i = 0; i < headerLength; i++) {
     SPI.transfer(headerBuffer[i]);
-    // Serial.print(" 0x");
-    // Serial.print(headerBuffer[i], HEX);
   }
-  // Serial.print("\nAntwort:");
 
   for (size_t i = 0; i < readlength; i++) {
     readBuffer[i] = SPI.transfer(0x00);
-    // Serial.print(" 0x");
-    // Serial.print(readBuffer[i], HEX);
   }
-  // Serial.print("\n");
 
   digitalWrite(SPI_chipselect, HIGH);
   SPI.endTransaction();

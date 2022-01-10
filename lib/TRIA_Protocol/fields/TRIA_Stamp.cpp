@@ -13,11 +13,6 @@ TRIA_Stamp TRIA_Stamp::operator-(TRIA_Stamp other) {
   // FIXME: bin mir nicht sicher, ob wir das wirklich
   // prüfen sollten, wenn schon dann sollte m_stamp aber
   // ein i64 sein, unsigned overflow ist UB.
-  Serial.print("Berechne ");
-  print();
-  Serial.print(" - ");
-  other.print();
-  Serial.print("\n");
   VERIFY(m_stamp >= other.m_stamp);
   return TRIA_Stamp(m_stamp - other.m_stamp);
 }
