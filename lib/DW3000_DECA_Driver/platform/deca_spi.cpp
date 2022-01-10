@@ -42,15 +42,26 @@ void DWIC_configure_spi(size_t spi_rate) {
   DWIC_set_spi_rate(spi_rate);
 }
 
+volatile bool interrupts_work = false;
+
+void test_interrupts(void) { interrupts_work = true; }
+
 void DWIC_configure_interrupts(void (*tx_handler)(const dwt_cb_data_t *cb_data),
                                void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
   dwt_setcallbacks(tx_handler, recv_handler, NULL, NULL, NULL, NULL);
   dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0,
                    DWT_ENABLE_INT);
-  // TODO: richtigen Pin Mode herausfinden
   pinMode(SPI_interrupt, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(SPI_interrupt), dwt_isr, HIGH);
+  attachInterrupt(digitalPinToInterrupt(SPI_interrupt), test_interrupts, RISING);
+  digitalWrite(SPI_interrupt, LOW);
+  delayMicroseconds(100);
+  digitalWrite(SPI_interrupt, HIGH);
 
+  if (interrupts_work) {
+    Serial.println("attachInterrupt() funktioniert.");
+  } else {
+    Serial.println("attachInterrupt() funktioniert nicht.");
+  }
   // sofort Verbindungen annehmen
   dwt_writefastCMD(CMD_RX);
 }
