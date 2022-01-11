@@ -39,13 +39,13 @@ void DWIC_configure_spi(size_t spi_rate) {
       .pdoaMode = DWT_PDOA_M0,
   };
 
+  VERIFY(dwt_configure(&config) == DWT_SUCCESS);
+
   dwt_txconfig_t tx_config = {
       .PGdly = 0x34,
       .power = 0xfdfdfdfd,
-      .PGcount = 10, // FIXME: nach richtigem Wert fragen, im API Guide steht nichts
+      .PGcount = dwt_calcpgcount(0x34, 5),
   };
-
-  VERIFY(dwt_configure(&config) == DWT_SUCCESS);
   dwt_configuretxrf(&tx_config);
   DWIC_set_spi_rate(spi_rate);
 }
