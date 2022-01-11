@@ -186,11 +186,10 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     dwt_writetxfctrl(packet->packed_size() + FCS_LEN, 0, 0);
     VERIFY(dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
 
-    // Serial.print("a");
-    // while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};
-    // Serial.print("b");
-    // dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
-    // save_tx_stamp();
+    while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {
+    }; // <-- Endlosschleife
+    dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
+    save_tx_stamp();
   } else if (packet->is_type(range_response)) {
     VERIFY(packet->packed_size() == TRIA_RangeResponse::PACKED_SIZE);
 #ifdef DEBUG

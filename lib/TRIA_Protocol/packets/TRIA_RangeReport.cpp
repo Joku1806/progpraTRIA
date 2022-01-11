@@ -10,7 +10,7 @@ void TRIA_RangeReport::print() {
   double distance = dt.value() / 2.0 * c_air;
   Serial.print("Distanz von ");
   received_from().print();
-  Serial.print(" nach ");
+  Serial.print(" zu ");
   sent_to().print();
   Serial.print(" ist ");
   Serial.print(distance);

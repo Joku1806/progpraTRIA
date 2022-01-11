@@ -46,11 +46,11 @@ void setup() {
 
 void loop() {
 #ifdef SENDER
-  interface.send_packet(&request);
+  interface.send_packet(&request); // DW 1
   delay(1000);
-  interface.receive_packet_mock(TRIA_RangeRequest::PACKED_SIZE + 2, report);
+  interface.receive_packet_mock(TRIA_RangeRequest::PACKED_SIZE + 2, report); // DW 2
   delay(1000);
-  interface.receive_packet_mock(TRIA_RangeResponse::PACKED_SIZE + 2, report);
+  interface.receive_packet_mock(TRIA_RangeResponse::PACKED_SIZE + 2, report); // DW 1
   report.print();
   delay(1000);
 #endif
