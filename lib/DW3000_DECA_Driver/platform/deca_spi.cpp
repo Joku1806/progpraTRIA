@@ -16,6 +16,7 @@ void DWIC_reset() {
   pinMode(SPI_reset, INPUT);
   delayMicroseconds(1000);
 
+  while (!dwt_checkidlerc()) {};
   DWIC_set_spi_rate(2000000);
   VERIFY(dwt_initialise(DWT_DW_INIT) == DWT_SUCCESS);
 }
@@ -24,27 +25,30 @@ void DWIC_reset() {
 void DWIC_configure_spi(size_t spi_rate) {
   dwt_config_t config = {
       .chan = 5,
-      .txPreambLength = DWT_PLEN_32,
-      .rxPAC = DWT_PAC4,
-      .txCode = 3,
-      .rxCode = 3,
-      .sfdType = DWT_SFD_DW_16,
+      .txPreambLength = DWT_PLEN_128,
+      .rxPAC = DWT_PAC8,
+      .txCode = 9,
+      .rxCode = 9,
+      .sfdType = DWT_SFD_DW_8,
       .dataRate = DWT_BR_6M8,
       .phrMode = DWT_PHRMODE_STD,
-      .phrRate = DWT_BR_6M8,
-      .sfdTO = DWT_PLEN_32 + 1 + DWT_SFD_DW_16 - DWT_PAC4,
+      .phrRate = DWT_PHRRATE_STD,
+      .sfdTO = 129 + 8 - 8, /* SFD timeout (preamble length + 1 + SFD length - PAC size) */
       .stsMode = DWT_STS_MODE_OFF,
       .stsLength = DWT_STS_LEN_32,
       .pdoaMode = DWT_PDOA_M0,
   };
 
+  dwt_txconfig_t tx_config = {
+      .PGdly = 0x34,
+      .power = 0xfdfdfdfd,
+      .PGcount = 10, // FIXME: nach richtigem Wert fragen, im API Guide steht nichts
+  };
+
   VERIFY(dwt_configure(&config) == DWT_SUCCESS);
+  dwt_configuretxrf(&tx_config);
   DWIC_set_spi_rate(spi_rate);
 }
-
-volatile bool interrupts_work = false;
-
-void test_interrupts(void) { interrupts_work = true; }
 
 void DWIC_configure_interrupts(void (*tx_handler)(const dwt_cb_data_t *cb_data),
                                void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
@@ -52,16 +56,8 @@ void DWIC_configure_interrupts(void (*tx_handler)(const dwt_cb_data_t *cb_data),
   dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0,
                    DWT_ENABLE_INT);
   pinMode(SPI_interrupt, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(SPI_interrupt), test_interrupts, RISING);
   digitalWrite(SPI_interrupt, LOW);
-  delayMicroseconds(100);
-  digitalWrite(SPI_interrupt, HIGH);
-
-  if (interrupts_work) {
-    Serial.println("attachInterrupt() funktioniert.");
-  } else {
-    Serial.println("attachInterrupt() funktioniert nicht.");
-  }
+  attachInterrupt(digitalPinToInterrupt(SPI_interrupt), dwt_isr, RISING);
   // sofort Verbindungen annehmen
   dwt_writefastCMD(CMD_RX);
 }

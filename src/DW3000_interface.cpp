@@ -81,6 +81,10 @@ bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeRepo
 #ifndef DEBUG
   unsigned long start_us = micros();
 #endif
+
+#ifdef DEBUG
+  Serial.println("--- receive_packet (mock)");
+#endif
   uint64_t mocked_recv = static_cast<uint64_t>(dwt_readsystimestamphi32()) << 8;
   m_rx_stamp.initialise_from_buffer_no_bswap((uint8_t *)(&mocked_recv));
 
@@ -165,8 +169,12 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
   unsigned long start_us = micros();
 #endif
 
+#ifdef DEBUG
+  Serial.println("--- send_packet");
+#endif
+
   VERIFY(!packet->is_type(range_report));
-  while (dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK) {}
+  while (dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK) {}
 
   if (packet->is_type(range_request)) {
     VERIFY(packet->packed_size() == TRIA_RangeRequest::PACKED_SIZE);
@@ -176,7 +184,13 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     packet->pack_into(m_packet_buffer);
     VERIFY(dwt_writetxdata(packet->packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
     dwt_writetxfctrl(packet->packed_size() + FCS_LEN, 0, 0);
-    dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
+    VERIFY(dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
+
+    // Serial.print("a");
+    // while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};
+    // Serial.print("b");
+    // dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
+    // save_tx_stamp();
   } else if (packet->is_type(range_response)) {
     VERIFY(packet->packed_size() == TRIA_RangeResponse::PACKED_SIZE);
 #ifdef DEBUG
@@ -192,15 +206,8 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     packet->pack_into(m_packet_buffer);
     VERIFY(dwt_writetxdata(packet->packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
     dwt_writetxfctrl(packet->packed_size() + FCS_LEN, 0, 0);
-#ifdef DEBUG
-    Serial.printf("Sende um %u, Systemzeit (hi32) ist im Moment %u.\n", send_time_hi32,
-                  dwt_readsystimestamphi32());
-#endif
-    // FIXME: Könnte Problem geben, wenn systimer zwischen Berechnungen auf 0 zurückgesetzt wird.
-    // Aber ka ob das überhaupt passieren kann.
-    VERIFY(send_time_hi32 > dwt_readsystimestamphi32());
     dwt_setdelayedtrxtime(send_time_hi32);
-    dwt_starttx(DWT_START_TX_DELAYED);
+    VERIFY(dwt_starttx(DWT_START_TX_DELAYED) == DWT_SUCCESS);
   }
 
 #ifdef DEBUG
