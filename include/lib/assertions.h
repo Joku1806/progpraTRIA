@@ -16,11 +16,15 @@
     }                                                                                              \
   } while (0)
 
-#define VERIFY_NOT_REACHED() VERIFY(false)
-
 #else
 
-#define VERIFY(expression)
-#define VERIFY_NOT_REACHED()
+#define VERIFY(expression)                                                                         \
+  do {                                                                                             \
+    if (!(expression)) {                                                                           \
+      exit(EXIT_FAILURE);                                                                          \
+    }                                                                                              \
+  } while (0)
 
 #endif
+
+#define VERIFY_NOT_REACHED() VERIFY(false)
