@@ -1,6 +1,17 @@
 #include <src/DW3000_interface.h>
 #include <lib/assertions.h>
 
+
+
+/*
+scedule reports to be send by calling scedule report and then them with send_sceduled_reports
+you can also send a single report without affecting the scedule with send_single_report
+get_repnum() tells you how many reports are sceduled
+you can scedule at most REPLISTZISE reports( but shouldnt )
+
+*/
+
+
 struct stampblock
 {
     uint32_t sendid; //the ids are just 1 byte but take up 4bytes of space anyway, and this makes everything way easier to send
@@ -8,7 +19,7 @@ struct stampblock
     uint64_t rxtime;
     uint64_t txtime;
 };
-#define REPLISTZISE 64
+#define REPLISTZISE 64 // at time of writing there would be enough space in RAM for 1197 stampblocks
 //place to store not send reports and counter
 struct stampblock replist[REPLISTZISE];
 int repnum = 0;
@@ -41,6 +52,9 @@ void scedule_report(TRIA_RangeReport rep){
 }
 
 int send_sceduled_reports(){
+    /*  sends all reports sceduled by scedule_report() and resets the que
+        returns the number of formerly sceduled reports
+    */
     int ret = repnum;
 
     while (Serial.read() != 0xff);
