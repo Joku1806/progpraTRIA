@@ -1,5 +1,4 @@
 
-
 #include <RH_RF95.h>
 #include <SPI.h>
 #include <lib/TRIA_Protocol/fields/TRIA_ID.h>
@@ -53,7 +52,7 @@ void loop() {
       TRIA_GenericPacket a;
       a.initialise_from_buffer(buf);
       a.print();
-      // checken ob was für trackee angekommen
+      // checken ob was für trackee angekommen ist
       if (a.is_addressed_to(id)) {
 
         if (a.is_type(range_request)) {
