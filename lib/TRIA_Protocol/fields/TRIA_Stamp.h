@@ -7,7 +7,7 @@ public:
   static const size_t PACKED_SIZE = 8;
 
   TRIA_Stamp() : m_stamp(0) {}
-  TRIA_Stamp(uint64_t stamp) : m_stamp(stamp) {}
+  TRIA_Stamp(uint64_t stamp) : m_stamp(stamp & 0x000000FFFFFFFFFF) {}
   uint64_t value() { return m_stamp; }
 
   TRIA_Stamp operator-(TRIA_Stamp other);
