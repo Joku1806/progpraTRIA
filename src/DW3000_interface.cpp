@@ -42,8 +42,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   receive_mask.initialise_from_buffer(m_packet_buffer + TRIA_Action::PACKED_SIZE +
                                       TRIA_ID::PACKED_SIZE);
   if (!m_id.matches_mask(receive_mask)) {
-    dwt_write32bitreg(SYS_STATUS_ID,
-                      SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
     return false;
   }
 
@@ -57,14 +56,13 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   }
 
   received->initialise_from_buffer(m_packet_buffer);
-  dwt_write32bitreg(SYS_STATUS_ID,
-                    SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
 
   if (received->is_type(range_request)) {
     auto response = TRIA_RangeResponse(m_id, received->received_from(), m_rx_stamp);
     send_packet(&response);
     return false;
-  } else {
+  } else if (received->is_type(range_report)) {
     TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
     TRIA_Stamp measured_tx = static_cast<TRIA_RangeResponse *>(received)->get_tx_stamp();
     m_rx_stamp = m_rx_stamp - (measured_tx - measured_rx);
@@ -78,13 +76,6 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
 // werden, die der vorherige send_packet() call in m_packet_buffer
 // geschrieben hat. Außerdem wird die Systemzeit als rx stamp benutzt.
 bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeReport &out) {
-#ifndef DEBUG
-  unsigned long start_us = micros();
-#endif
-
-#ifdef DEBUG
-  Serial.println("--- receive_packet (mock)");
-#endif
   uint64_t mocked_recv = static_cast<uint64_t>(dwt_readsystimestamphi32()) << 8;
   m_rx_stamp.initialise_from_buffer_no_bswap((uint8_t *)(&mocked_recv));
 
@@ -104,8 +95,7 @@ bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeRepo
   receive_mask.initialise_from_buffer(m_packet_buffer + TRIA_Action::PACKED_SIZE +
                                       TRIA_ID::PACKED_SIZE);
   if (!m_id.matches_mask(receive_mask)) {
-    dwt_write32bitreg(SYS_STATUS_ID,
-                      SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
+    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
     return false;
   }
 
@@ -116,86 +106,36 @@ bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeRepo
     default: VERIFY_NOT_REACHED();
   }
   received->initialise_from_buffer(m_packet_buffer);
-  // FIXME: Eigentlich braucht man nur SYS_STATUS_ALL_RX_GOOD, weil diese Funktion nur bei diesem
-  // Event aufgerufen wird.
-  dwt_write32bitreg(SYS_STATUS_ID,
-                    SYS_STATUS_ALL_RX_GOOD | SYS_STATUS_ALL_RX_TO | SYS_STATUS_ALL_RX_ERR);
-
-#ifdef DEBUG
-  Serial.print("Habe Paket bekommen: ");
-  received->print();
-  Serial.print("\n");
-#endif
+  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
 
   if (received->is_type(range_request)) {
-#ifdef DEBUG
-    Serial.println("Paket ist eine Range Request, verschicke Antwort mit rx und tx.");
-#endif
-
     auto response = TRIA_RangeResponse(m_id, received->received_from(), m_rx_stamp);
     send_packet(&response);
-
-#ifndef DEBUG
-    unsigned long end_us = micros();
-    Serial.printf("Benchmark (recv request) = %uus\n\n", end_us - start_us);
-#else
-    Serial.print("\n");
-#endif
-
     return false;
   } else {
-#ifdef DEBUG
-    Serial.println("Paket ist eine Range Response, passe ToF anhand gesendetem rx und tx an.");
-#endif
-
     TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
     TRIA_Stamp measured_tx = static_cast<TRIA_RangeResponse *>(received)->get_tx_stamp();
     m_rx_stamp = m_rx_stamp - (measured_tx - measured_rx);
     out = TRIA_RangeReport(received->received_from(), m_id, m_rx_stamp, m_tx_stamp);
-
-#ifndef DEBUG
-    unsigned long end_us = micros();
-    Serial.printf("Benchmark (recv response) = %uus\n\n", end_us - start_us);
-#else
-    Serial.print("\n");
-#endif
-
     return true;
   }
 }
 
 void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
-#ifndef DEBUG
-  unsigned long start_us = micros();
-#endif
-
-#ifdef DEBUG
-  Serial.println("--- send_packet");
-#endif
-
   VERIFY(!packet->is_type(range_report));
-  while (dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK) {}
+  // FIXME: besseren Weg finden, zu Sendemodus umzuschalten, das hier könnte Probleme geben, weil am
+  // Ende Interrupts dieser Funktion Interrupts angeschaltet werden und wir im Moment in einem
+  // anderen Interrupthandler sind.
+  dwt_forcetrxoff();
 
   if (packet->is_type(range_request)) {
     VERIFY(packet->packed_size() == TRIA_RangeRequest::PACKED_SIZE);
-#ifdef DEBUG
-    Serial.println("Paket ist eine Range Request, versende im Immediate Modus.");
-#endif
     packet->pack_into(m_packet_buffer);
     VERIFY(dwt_writetxdata(packet->packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
     dwt_writetxfctrl(packet->packed_size() + FCS_LEN, 0, 0);
     VERIFY(dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
-
-    while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {
-    }; // <-- Endlosschleife
-    dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
-    save_tx_stamp();
   } else if (packet->is_type(range_response)) {
     VERIFY(packet->packed_size() == TRIA_RangeResponse::PACKED_SIZE);
-#ifdef DEBUG
-    Serial.println("Paket ist eine Range Response, versende im Delayed Modus, damit Absendezeit in "
-                   "Paket eingetragen werden kann.");
-#endif
     uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
     uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
     uint64_t send_time_hi32 = sys_time_hi32 + SEND_DELAY;
@@ -209,23 +149,10 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     VERIFY(dwt_starttx(DWT_START_TX_DELAYED) == DWT_SUCCESS);
   }
 
-#ifdef DEBUG
-  Serial.print("Versendetes Paket: ");
-  packet->print();
-  Serial.print("\n");
+  while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};
+  save_tx_stamp();
+  dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
-  Serial.printf("Netzwerkrepräsentation (%u Bytes):", packet->packed_size());
-  for (size_t i = 0; i < packet->packed_size(); i++) {
-    Serial.print(" 0x");
-    Serial.print(m_packet_buffer[i], HEX);
-  }
-  Serial.print("\n");
-#endif
-
-#ifndef DEBUG
-  unsigned long end_us = micros();
-  Serial.printf("Benchmark (send) = %uus\n\n", end_us - start_us);
-#else
-  Serial.print("\n");
-#endif
+  dwt_forcetrxoff();
+  dwt_writefastCMD(DWT_START_RX_IMMEDIATE);
 }

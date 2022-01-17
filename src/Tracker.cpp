@@ -15,7 +15,6 @@ TRIA_RangeReport report;
 
 // FIXME: Sollten wahrscheinlich Teil von DW3000_Interface sein
 void recv_handler(const dwt_cb_data_t *cb_data) {
-  Serial.println("Habe Paket bekommen!");
   auto got_report = interface.handle_incoming_packet(cb_data->datalength, report);
   if (!got_report) {
     return;
