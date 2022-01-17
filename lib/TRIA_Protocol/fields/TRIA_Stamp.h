@@ -4,7 +4,7 @@
 
 class TRIA_Stamp : public TRIA_Field {
 public:
-  static const size_t PACKED_SIZE = 5;
+  static const size_t PACKED_SIZE = 8;
 
   TRIA_Stamp() : m_stamp(0) {}
   TRIA_Stamp(uint64_t stamp) : m_stamp(stamp) {}
