@@ -4,11 +4,6 @@
 #include <inttypes.h>
 #include <lib/assertions.h>
 
-void TRIA_Stamp::set_value(uint64_t stamp) {
-  VERIFY(stamp <= 0x000000FFFFFFFFFF);
-  m_stamp = stamp;
-}
-
 TRIA_Stamp TRIA_Stamp::operator-(TRIA_Stamp other) {
   // FIXME: bin mir nicht sicher, ob wir das wirklich
   // prüfen sollten, wenn schon dann sollte m_stamp aber

@@ -8,7 +8,6 @@ public:
 
   TRIA_Stamp() : m_stamp(0) {}
   TRIA_Stamp(uint64_t stamp) : m_stamp(stamp) {}
-  void set_value(uint64_t stamp);
   uint64_t value() { return m_stamp; }
 
   TRIA_Stamp operator-(TRIA_Stamp other);
