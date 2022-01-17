@@ -50,14 +50,15 @@ void DWIC_configure_spi(size_t spi_rate) {
   DWIC_set_spi_rate(spi_rate);
 }
 
-void DWIC_configure_interrupts(void (*tx_handler)(const dwt_cb_data_t *cb_data),
-                               void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
-  dwt_setcallbacks(tx_handler, recv_handler, NULL, NULL, NULL, NULL);
-  dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0,
-                   DWT_ENABLE_INT);
+void DWIC_configure_interrupts(void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
+  dwt_setcallbacks(NULL, recv_handler, NULL, NULL, NULL, NULL);
+  dwt_setinterrupt(SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
   pinMode(SPI_interrupt, INPUT_PULLUP);
   digitalWrite(SPI_interrupt, LOW);
   attachInterrupt(digitalPinToInterrupt(SPI_interrupt), dwt_isr, RISING);
+
+  // FIXME: wird das gebraucht?
+  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RCINIT_BIT_MASK | SYS_STATUS_SPIRDY_BIT_MASK);
   // sofort Verbindungen annehmen
   dwt_writefastCMD(CMD_RX);
 }

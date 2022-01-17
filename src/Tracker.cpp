@@ -24,13 +24,6 @@ void recv_handler(const dwt_cb_data_t *cb_data) {
   report.print();
 }
 
-void tx_handler(const dwt_cb_data_t *cb_data) {
-  Serial.println("Paket wurde gesendet!");
-  (void)cb_data;
-  interface.save_tx_stamp();
-  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_TX);
-}
-
 void setup() {
   delay(5000);
   // LoRa Chipselect auf HIGH schalten, damit er nicht während der SPI Kommunikation mit dem DW3000
@@ -41,7 +34,7 @@ void setup() {
   SPI.begin();
   Serial.begin(9600);
   while (!Serial) {}
-  interface = DW3000_Interface(id, tx_handler, recv_handler);
+  interface = DW3000_Interface(id, recv_handler);
 }
 
 void loop() {

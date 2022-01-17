@@ -5,13 +5,13 @@
 #include <platform/deca_spi.h>
 #include <src/DW3000_interface.h>
 
-DW3000_Interface::DW3000_Interface(TRIA_ID &id, void (*tx_handler)(const dwt_cb_data_t *cb_data),
+DW3000_Interface::DW3000_Interface(TRIA_ID &id,
                                    void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
   m_id = id;
   // Reihenfolge ist hier wichtig, nicht ändern!
   DWIC_reset();
   DWIC_configure_spi(SPI_FASTRATE);
-  DWIC_configure_interrupts(tx_handler, recv_handler);
+  DWIC_configure_interrupts(recv_handler);
 }
 
 void DW3000_Interface::save_rx_stamp() {
