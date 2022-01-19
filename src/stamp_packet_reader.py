@@ -58,7 +58,7 @@ class StampPacketReader:
         times = []
 
         # TODO: stattdessen erst in Sekunden umrechnen (clock frequenz nachsehen),
-        # dann durch 2 teilen
+        # dann durch 2 teilen (Simon)
 
         # speed of light in air = 299702458.0 m/s
         # or, if you ask wolfram  299709000 m/2
@@ -74,7 +74,7 @@ class StampPacketReader:
             TOF = TOF / magicalconversionnumber
             times.append({"id":ID,'tof':TOF})
 
-        # TODO: Zeitstempel fehlt noch, sollte am Anfang der Funktion genommen werden
+        # TODO: Zeitstempel fehlt noch, sollte am Anfang der Funktion genommen werden (Simon)
 
         #funfact; python already produces nearly valid json if you repr a dict, just needs to change ' to "
             #i should very much still convert to json

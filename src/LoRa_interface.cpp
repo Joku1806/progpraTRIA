@@ -67,8 +67,8 @@ void recv_handler(const dwt_cb_data_t *cb_data) {
     return;
   }
 
-  // TODO: irgendeinen Counter/Flag etc aktualisieren, um außerhalb der Interruptroutine
-  // entscheiden zu können, ob empfangener Range Report an Data Team weitergeleitet werden soll.
+  // TODO: counter aktualisieren, um außerhalb der Interruptroutine
+  // entscheiden zu können, ob empfangener Range Report an Data Team weitergeleitet werden soll. (Jonas)
   cached_report.print();
 }
 
@@ -113,8 +113,9 @@ void loop() {
     default: VERIFY_NOT_REACHED();
   }
 
-  // TODO: wenn Range Request und von Coordinator geschickt, dann selbst weiterversenden
-  // TODO: wenn Range Report und man selbst Coordinator ist, dann über USB an Data Team schicken
+  // TODO: wenn Range Request und von Coordinator geschickt, dann selbst weiterversenden (Janis)
+  // TODO: wenn Range Report und man selbst Coordinator ist, dann über USB an Data Team schicken,
+  // counter benutzen (siehe oben im recv_handler) (Greta/Simon)
 
-  // TODO: wenn man selbst Coordinator ist, dann Annahme von Commands über USB und Ausführung
+  // TODO: wenn man selbst Coordinator ist, dann Annahme von Commands über USB und Ausführung (Greta/Simon)
 }
