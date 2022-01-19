@@ -5,7 +5,7 @@ TRIA_dev_type TRIA_ID::type() { return (TRIA_dev_type)(m_id & 0xe0); }
 uint8_t TRIA_ID::id() { return m_id & 0x1f; }
 
 // FIXME: besseren Namen finden
-bool TRIA_ID::matches_mask(TRIA_ID mask) {
+bool TRIA_ID::matches_mask(TRIA_ID& mask) {
   // Nachricht an alle Empfänger
   if (mask.type() == 0 && mask.id() == 0) {
     return true;

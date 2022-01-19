@@ -14,10 +14,11 @@ public:
   static const size_t PACKED_SIZE = sizeof(uint8_t);
 
   TRIA_ID() : m_id(0) {};
+  TRIA_ID(uint8_t id) : m_id(id) {};
   TRIA_ID(TRIA_dev_type type, uint8_t id) : m_id(type | (id & 0x1f)) {};
   TRIA_dev_type type();
   uint8_t id();
-  bool matches_mask(TRIA_ID mask);
+  bool matches_mask(TRIA_ID& mask);
 
   size_t pack_into(uint8_t *bytes) override;
   size_t packed_size() override;
