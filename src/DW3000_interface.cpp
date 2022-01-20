@@ -123,10 +123,15 @@ bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeRepo
 
 void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
   VERIFY(!packet->is_type(range_report));
-  // FIXME: besseren Weg finden, zu Sendemodus umzuschalten, das hier könnte Probleme geben, weil am
-  // Ende Interrupts dieser Funktion Interrupts angeschaltet werden und wir im Moment in einem
-  // anderen Interrupthandler sind.
+  // Wir wissen nicht, ob wir diese Funktion in einem Interrupt oder im normalen
+  // Programmablauf aufrufen, deswegen gehen wir von dem Fall aus, der etwas kaputtmachen könnte,
+  // d.h. ein send() aus dem Interruptmodus unterbricht ein normales send(). Deswegen schalten wir
+  // direkt nach diesem Aufruf (der Interrupts wieder anschaltet), Interrupts wieder aus, damit das nicht
+  // vorkommen kann.
+  // Falls es trotzdem irgendwelche Probleme gibt, bleibt uns nicht anderes übrig, als zwei separate
+  // Sendefunktionen zu haben.
   dwt_forcetrxoff();
+  decaIrqStatus_t stat = decamutexon();
 
   if (packet->is_type(range_request)) {
     VERIFY(packet->packed_size() == TRIA_RangeRequest::PACKED_SIZE);
@@ -154,5 +159,7 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
   dwt_forcetrxoff();
+  // Default Modus ist receive, deswegen nach Senden wieder direkt dahin zurückschalten
   dwt_writefastCMD(DWT_START_RX_IMMEDIATE);
+  decamutexoff(stat);
 }
