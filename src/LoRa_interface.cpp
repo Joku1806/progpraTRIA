@@ -23,7 +23,10 @@ TRIA_RangeReport cached_request;
 TRIA_RangeReport cached_response;
 TRIA_RangeReport cached_report;
 
-// FIXME: Sollte in eigene Datei, weil DW3000_Interface die Logik auch braucht
+volatile unsigned measure_counter = 0;
+volatile bool measure_received = false;
+
+// TODO: Sollte in eigene Datei, weil DW3000_Interface die Logik auch braucht (Janis)
 bool packet_ok(uint8_t* nw_bytes, uint8_t received_length, TRIA_ID& receiver_id) {
   if (received_length > TRIA_GenericPacket::PACKED_SIZE) {
     return false;
@@ -67,9 +70,8 @@ void recv_handler(const dwt_cb_data_t *cb_data) {
     return;
   }
 
-  // TODO: counter aktualisieren, um außerhalb der Interruptroutine
-  // entscheiden zu können, ob empfangener Range Report an Data Team weitergeleitet werden soll. (Jonas)
-  cached_report.print();
+  measure_counter++;
+  measure_received = true;
 }
 
 void setup() {
@@ -89,33 +91,35 @@ void setup() {
 
 
 void loop() {
-  if (!rf95.available()) {
-    return;
+  if (rf95.available()) {
+    uint8_t recv_length = 0;
+    if (!rf95.recv(recv_buffer, &recv_length)) {
+      return;
+    }
+
+    if (!packet_ok(recv_buffer, recv_length, id)) {
+      return;
+    }
+
+    TRIA_Action action;
+    action.initialise_from_buffer(recv_buffer);
+
+    TRIA_GenericPacket *received;
+    switch (action.value()) {
+      case range_request: received = &cached_request; break;
+      case range_response: received = &cached_response; break;
+      case range_report: received = &cached_report; break;
+      default: VERIFY_NOT_REACHED();
+    }
+
+    // TODO: wenn Range Request und von Coordinator geschickt, dann selbst weiterversenden (Janis)
+    // measure_counter muss hier wieder zurückgesetzt werden.
+    
+    // TODO: wenn Range Report und man selbst Coordinator ist, dann über USB an Data Team schicken (Greta/Simon)
+    if (measure_received && measure_counter <= 3) {
+      measure_received = false;
+    }
   }
-
-  uint8_t recv_length = sizeof(recv_buffer);
-  if (!rf95.recv(recv_buffer, &recv_length)) {
-    return;
-  }
-
-  if (!packet_ok(recv_buffer, recv_length, id)) {
-    return;
-  }
-
-  TRIA_Action action;
-  action.initialise_from_buffer(recv_buffer);
-
-  TRIA_GenericPacket *received;
-  switch (action.value()) {
-    case range_request: received = &cached_request; break;
-    case range_response: received = &cached_response; break;
-    case range_report: received = &cached_report; break;
-    default: VERIFY_NOT_REACHED();
-  }
-
-  // TODO: wenn Range Request und von Coordinator geschickt, dann selbst weiterversenden (Janis)
-  // TODO: wenn Range Report und man selbst Coordinator ist, dann über USB an Data Team schicken,
-  // counter benutzen (siehe oben im recv_handler) (Greta/Simon)
 
   // TODO: wenn man selbst Coordinator ist, dann Annahme von Commands über USB und Ausführung (Greta/Simon)
 }
