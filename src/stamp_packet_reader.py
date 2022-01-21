@@ -1,5 +1,4 @@
-import struct
-import serial
+import struct,serial,json,time
 from dataclasses import dataclass
 
 
@@ -53,17 +52,23 @@ class StampPacketReader:
         
     def reveive_json(self):
         packets = self.build_fake_pakets()
+
+        #i doubt precision bejond 1 sec will be needed here
+        #i would love to use datetime(that even gives me usecs) but it gives me a sane YY-MM-DD format not what is specified
+        #mm-dd-YY HH:MM:SS.ff
+        t = time.localtime()
+        timestamp = f"{t.tm_mon}-{t.tm_mday}-{t.tm_year} {t.tm_hour}:{t.tm_min}:{t.tm_sec}.0"
         num = len(packets)
 
         times = []
 
         # TODO: stattdessen erst in Sekunden umrechnen (clock frequenz nachsehen),
-        # dann durch 2 teilen (Simon)
+        # dann durch 2 teilen (Simon)(sollte das nicht datateam aufgabe sein?
 
         # speed of light in air = 299702458.0 m/s
         # or, if you ask wolfram  299709000 m/2
         # mein tafelwerk sagt     299711000 m/2
-        magicalconversionnumber = 5
+        magicalconversionnumber = (128*499.2*10**6)
         
         ID=0
         TOF=0
@@ -78,8 +83,8 @@ class StampPacketReader:
 
         #funfact; python already produces nearly valid json if you repr a dict, just needs to change ' to "
             #i should very much still convert to json
-        ret = {"mcus":times}
-        retstr = str(ret).replace("'",'"') 
+        ret = {"timestamp":timestamp,"mcus":times}
+        retstr = json.dumps(ret,indent=4)
 
         return retstr
             
@@ -89,9 +94,9 @@ class StampPacketReader:
 if __name__ == "__main__":
     
     reader = StampPacketReader(Fake=True)
-    reader.reveive_json()
-    while True:
-        input("#begin#")
+    print(reader.reveive_json())
+    while False:
+        
         packets = reader.build_fake_pakets()
         num=0
         for packet in packets:
