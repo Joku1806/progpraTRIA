@@ -116,6 +116,9 @@ void loop() {
     // measure_counter muss hier wieder zurückgesetzt werden.
     
     // TODO: wenn Range Report und man selbst Coordinator ist, dann über USB an Data Team schicken (Greta/Simon)
+    // FIXME: Können wir nicht einzeln rüberschicken, weil wir vorher wissen müssen, ob überhaupt 3 Messungen
+    // ankommen, wir sollten also bei jedem Check die Differenz von der aktuellen Zeit und der Ankunftszeit des
+    // letzten Pakets berechnen und damit entscheiden, ob wir alle bisherigen Pakete rübersenden sollen. 
     if (measure_received && measure_counter <= 3) {
       measure_received = false;
     }
