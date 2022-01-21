@@ -3,6 +3,7 @@
 .pio
 .vscode
 compile_commands.json
+workspace.code-workspace
 python_env
 pyvenv.cfg
 src/__pycache__
