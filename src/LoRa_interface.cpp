@@ -10,6 +10,7 @@
 #include <platform/pin_mappings.h>
 #include <lib/assertions.h>
 #include <src/DW3000_interface.h>
+#include <TRIA_helper.h>
 
 // Adafruit Feather M0 with RFM95
 RH_RF95 rf95(8, 3);
@@ -26,38 +27,6 @@ TRIA_RangeReport cached_report;
 volatile unsigned measure_counter = 0;
 volatile bool measure_received = false;
 
-// TODO: Sollte in eigene Datei, weil DW3000_Interface die Logik auch braucht (Janis)
-bool packet_ok(uint8_t* nw_bytes, uint8_t received_length, TRIA_ID& receiver_id) {
-  if (received_length > TRIA_GenericPacket::PACKED_SIZE) {
-    return false;
-  }
-
-  TRIA_Action a;
-  a.initialise_from_buffer(nw_bytes);
-
-  switch (a.value()) {
-    case range_request:
-      if (received_length != TRIA_RangeRequest::PACKED_SIZE) { return false; }
-      break;
-    case range_response:
-      if (received_length != TRIA_RangeResponse::PACKED_SIZE) { return false; }
-      break;
-    case range_report:
-      if (received_length != TRIA_RangeReport::PACKED_SIZE) { return false; }
-      break;
-    default: VERIFY_NOT_REACHED();
-  }
-
-  TRIA_ID receive_mask;
-  receive_mask.initialise_from_buffer(nw_bytes + TRIA_Action::PACKED_SIZE +
-                                      TRIA_ID::PACKED_SIZE);
-  if (!receiver_id.matches_mask(receive_mask)) {
-    return false;
-  }
-
-  return true;
-}
-
 void lora_send_packet(TRIA_GenericPacket &packet) {
   packet.pack_into(send_buffer);
   rf95.send(send_buffer, packet.packed_size());
@@ -65,11 +34,13 @@ void lora_send_packet(TRIA_GenericPacket &packet) {
 }
 
 void recv_handler(const dwt_cb_data_t *cb_data) {
+  Serial.println("Habe Interrupt bekommen.");
   auto got_report = DW_interface.handle_incoming_packet(cb_data->datalength, cached_report);
   if (!got_report) {
     return;
   }
 
+  cached_report.print();
   measure_counter++;
   measure_received = true;
 }
@@ -85,6 +56,12 @@ void setup() {
   Serial.begin(9600);
   while (!Serial);
   
+#ifdef SENDER
+  Serial.println("Sender");
+#else
+  Serial.println("Receiver");
+#endif
+
   DW_interface = DW3000_Interface(id, recv_handler);
   VERIFY(rf95.init());
 }
@@ -125,4 +102,9 @@ void loop() {
   }
 
   // TODO: wenn man selbst Coordinator ist, dann Annahme von Commands über USB und Ausführung (Greta/Simon)
+  #ifdef SENDER
+  TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(0));
+  DW_interface.send_packet(&request);
+  delay(500);
+  #endif
 }

@@ -1,5 +1,11 @@
 #include <Arduino.h>
-#include <fields/TRIA_helper.h>
+#include <TRIA_helper.h>
+#include <packets/TRIA_GenericPacket.h>
+#include <packets/TRIA_RangeRequest.h>
+#include <packets/TRIA_RangeReport.h>
+#include <packets/TRIA_RangeResponse.h>
+#include <lib/assertions.h>
+
 
 
 bool packet_ok(uint8_t* nw_bytes, uint8_t received_length, TRIA_ID& receiver_id) {

@@ -51,8 +51,13 @@ void DWIC_configure_spi(size_t spi_rate) {
 }
 
 void DWIC_configure_interrupts(void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
-  dwt_setcallbacks(NULL, recv_handler, NULL, NULL, NULL, NULL);
-  dwt_setinterrupt(SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
+  dwt_setcallbacks(NULL, recv_handler, recv_handler, recv_handler, NULL, NULL);
+  dwt_setinterrupt(SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCE_ENABLE_BIT_MASK
+                  | SYS_ENABLE_LO_RXFR_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFSL_ENABLE_BIT_MASK
+                  | SYS_ENABLE_LO_RXFTO_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXOVRR_ENABLE_BIT_MASK
+                  | SYS_ENABLE_LO_RXPHD_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXPHE_ENABLE_BIT_MASK
+                  | SYS_ENABLE_LO_RXPRD_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXPTO_ENABLE_BIT_MASK
+                  | SYS_ENABLE_LO_RXSFDD_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXSTO_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
   pinMode(SPI_interrupt, INPUT_PULLUP);
   digitalWrite(SPI_interrupt, LOW);
   attachInterrupt(digitalPinToInterrupt(SPI_interrupt), dwt_isr, RISING);

@@ -154,12 +154,15 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     VERIFY(dwt_starttx(DWT_START_TX_DELAYED) == DWT_SUCCESS);
   }
 
+  Serial.print("a");
   while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};
+  Serial.print("b");
+  
   save_tx_stamp();
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
   dwt_forcetrxoff();
   // Default Modus ist receive, deswegen nach Senden wieder direkt dahin zurückschalten
-  dwt_writefastCMD(DWT_START_RX_IMMEDIATE);
+  dwt_writefastCMD(CMD_RX);
   decamutexoff(stat);
 }

@@ -37,7 +37,7 @@ void TRIA_Stamp::initialise_from_buffer(uint8_t *buffer) {
 
 void TRIA_Stamp::initialise_from_buffer_no_bswap(uint8_t *buffer) {
   m_stamp = 0;
-  memcpy(&m_stamp, buffer, PACKED_SIZE);
+  memcpy(&m_stamp, buffer, PACKED_SIZE - 3);
   VERIFY(m_stamp <= 0x000000FFFFFFFFFF);
 }
 
