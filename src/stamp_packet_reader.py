@@ -18,7 +18,7 @@ class StampPacketReader:
     # prüft erst, ob der Port übereinstimmt
     SERIAL_PORT = '/dev/ttyACM0'
     SEND_SIGNAL = 0xff.to_bytes(1,"little")
-    PACKET_SIZE = 24
+    PACKET_SIZE = 19
 
     def __init__(self,Fake = False):
         if not Fake:
@@ -34,7 +34,7 @@ class StampPacketReader:
             bytys = self.informant.read(self.PACKET_SIZE)
             print(f"bytys len={len(bytys)}")
             #if not len(bytys) == self.PACKET_SIZE:continue should ALLWAYS be True
-            (sendid,recvid,rxtime,txtime) = struct.unpack("=LLQQ", bytys)#L:uint32 - Q:unint64 
+            (_, sendid,recvid,rxtime,txtime) = struct.unpack(">BBBQQ", bytys)#L:uint32 - Q:unint64 
 
             packets.append(StampPacket(sendid, recvid, rxtime, txtime))
 
