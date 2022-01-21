@@ -28,19 +28,3 @@ bool packet_ok(uint8_t* nw_bytes, uint8_t received_length, TRIA_ID& receiver_id)
 
   return true;
 }
-
-void lora_send_packet(TRIA_GenericPacket &packet) {
-  packet.pack_into(send_buffer);
-  rf95.send(send_buffer, packet.packed_size());
-  rf95.waitPacketSent();
-}
-
-void recv_handler(const dwt_cb_data_t *cb_data) {
-  auto got_report = DW_interface.handle_incoming_packet(cb_data->datalength, cached_report);
-  if (!got_report) {
-    return;
-  }
-
-  measure_counter++;
-  measure_received = true;
-}
