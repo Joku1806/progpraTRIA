@@ -1,10 +1,10 @@
 #include <Arduino.h>
 #include <SPI.h>
+#include <TRIA_helper.h>
 #include <decadriver/deca_regs.h>
 #include <lib/assertions.h>
 #include <platform/deca_spi.h>
 #include <src/DW3000_interface.h>
-#include <TRIA_helper.h>
 
 DW3000_Interface::DW3000_Interface(TRIA_ID &id,
                                    void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
@@ -28,6 +28,17 @@ void DW3000_Interface::save_tx_stamp() {
 bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out) {
   dwt_readrxdata(m_packet_buffer, received_bytes - FCS_LEN, 0);
   if (!packet_ok(m_packet_buffer, received_bytes - FCS_LEN, m_id)) {
+#ifdef DEBUG
+    Serial.println("Empfangenes Paket hat falsches Format oder ist nicht an mich adressiert.");
+    Serial.print("Netzwerkrepräsentation:");
+
+    for (size_t i = 0; i < received_bytes - FCS_LEN; i++) {
+      Serial.print(" 0x");
+      Serial.print(m_packet_buffer[i], HEX);
+    }
+    Serial.print("\n");
+#endif
+
     dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
     return false;
   }
@@ -37,7 +48,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   TRIA_GenericPacket *received;
   TRIA_Action action;
   action.initialise_from_buffer(m_packet_buffer);
-  
+
   switch (action.value()) {
     case range_request: received = &m_cached_range_request; break;
     case range_response: received = &m_cached_range_response; break;
@@ -71,10 +82,9 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
   // Wir wissen nicht, ob wir diese Funktion in einem Interrupt oder im normalen
   // Programmablauf aufrufen, deswegen gehen wir von dem Fall aus, der etwas kaputtmachen könnte,
   // d.h. ein send() aus dem Interruptmodus unterbricht ein normales send(). Deswegen schalten wir
-  // direkt nach diesem Aufruf (der Interrupts wieder anschaltet), Interrupts wieder aus, damit das nicht
-  // vorkommen kann.
-  // Falls es trotzdem irgendwelche Probleme gibt, bleibt uns nicht anderes übrig, als zwei separate
-  // Sendefunktionen zu haben.
+  // direkt nach diesem Aufruf (der Interrupts wieder anschaltet), Interrupts wieder aus, damit das
+  // nicht vorkommen kann. Falls es trotzdem irgendwelche Probleme gibt, bleibt uns nicht anderes
+  // übrig, als zwei separate Sendefunktionen zu haben.
   dwt_forcetrxoff();
   decaIrqStatus_t stat = decamutexon();
 
@@ -99,12 +109,15 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
     VERIFY(dwt_starttx(DWT_START_TX_DELAYED) == DWT_SUCCESS);
   }
 
-  Serial.print("a");
   while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};
-  Serial.print("b");
-  
   save_tx_stamp();
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
+
+#ifdef DEBUG
+  Serial.print("Paket gesendet: ");
+  packet->print();
+  Serial.print("\n");
+#endif
 
   dwt_forcetrxoff();
   // Default Modus ist receive, deswegen nach Senden wieder direkt dahin zurückschalten
