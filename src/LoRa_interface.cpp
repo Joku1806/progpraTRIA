@@ -2,16 +2,16 @@
 #include <Arduino.h>
 #include <RH_RF95.h>
 #include <SPI.h>
+#include <TRIA_helper.h>
 #include <fields/TRIA_ID.h>
+#include <lib/assertions.h>
 #include <packets/TRIA_GenericPacket.h>
-#include <packets/TRIA_RangeRequest.h>
 #include <packets/TRIA_RangeReport.h>
+#include <packets/TRIA_RangeRequest.h>
 #include <packets/TRIA_RangeResponse.h>
 #include <platform/pin_mappings.h>
-#include <lib/assertions.h>
 #include <src/DW3000_interface.h>
 #include <src/USB_interface.h>
-#include <TRIA_helper.h>
 
 // Adafruit Feather M0 with RFM95
 RH_RF95 rf95(8, 3);
@@ -44,7 +44,6 @@ void recv_handler(const dwt_cb_data_t *cb_data) {
   Serial.print("\n");
 #endif
 
-
   if (id.is_coordinator() && !USB_interface.schedule_full()) {
     USB_interface.schedule_report(cached_report);
   }
@@ -60,8 +59,9 @@ void setup() {
 
 #ifdef DEBUG
   Serial.begin(9600);
-  while (!Serial);
-  
+  while (!Serial)
+    ;
+
 #ifdef SENDER
   Serial.println("Sender");
 #else
@@ -74,13 +74,13 @@ void setup() {
   VERIFY(rf95.init());
 }
 
-
 void loop() {
-  if (id.is_coordinator() && (USB_interface.schedule_full() || USB_interface.schedule_likely_finished())) {
+  if (id.is_coordinator() &&
+      (USB_interface.schedule_full() || USB_interface.schedule_likely_finished())) {
     USB_interface.send_scheduled_reports();
     USB_interface.schedule_reset();
   }
-  
+
   if (rf95.available()) {
     uint8_t recv_length = 0;
     if (!rf95.recv(recv_buffer, &recv_length)) {

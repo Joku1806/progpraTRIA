@@ -6,10 +6,10 @@ uint8_t TRIA_ID::id() { return m_id & 0x1f; }
 
 bool TRIA_ID::is_tracker() { return type() & tracker; }
 bool TRIA_ID::is_trackee() { return type() & trackee; }
-bool TRIA_ID::is_coordinator() {return type() & coordinator; }
+bool TRIA_ID::is_coordinator() { return type() & coordinator; }
 
 // FIXME: besseren Namen finden
-bool TRIA_ID::matches_mask(TRIA_ID& mask) {
+bool TRIA_ID::matches_mask(TRIA_ID &mask) {
   // Nachricht an alle Empfänger
   if (mask.type() == 0 && mask.id() == 0) {
     return true;

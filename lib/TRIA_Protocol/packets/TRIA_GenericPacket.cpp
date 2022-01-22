@@ -2,7 +2,7 @@
 #include <lib/assertions.h>
 #include <packets/TRIA_GenericPacket.h>
 
-bool TRIA_GenericPacket::is_addressed_to(TRIA_ID& id) {
+bool TRIA_GenericPacket::is_addressed_to(TRIA_ID &id) {
   TRIA_ID receiver = sent_to();
   return id.matches_mask(receiver);
 }
