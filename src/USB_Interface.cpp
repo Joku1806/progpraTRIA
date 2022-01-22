@@ -16,8 +16,11 @@ bool USB_Interface::schedule_full() {
 }
 
 bool USB_Interface::schedule_likely_finished() {
-  // TODO: Formel für den maximalen Unterschied zwischen Ankunft von aufeinander folgenden Messungen finden
-  return false;
+  if (!m_last_insert_time_valid) {
+    return false;
+  }
+  
+  return micros() - MAX_DELAY_US >= m_last_insert_time;
 }
 
 void USB_Interface::schedule_report(TRIA_RangeReport& r) {
