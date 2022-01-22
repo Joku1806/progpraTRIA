@@ -2,18 +2,21 @@
 #include <Arduino.h>
 #include <RH_RF95.h>
 #include <SPI.h>
+#include <TRIA_helper.h>
 #include <fields/TRIA_ID.h>
+#include <lib/assertions.h>
 #include <packets/TRIA_GenericPacket.h>
-#include <packets/TRIA_RangeRequest.h>
 #include <packets/TRIA_RangeReport.h>
+#include <packets/TRIA_RangeRequest.h>
 #include <packets/TRIA_RangeResponse.h>
 #include <platform/pin_mappings.h>
-#include <lib/assertions.h>
 #include <src/DW3000_interface.h>
+#include <src/USB_interface.h>
 
 // Adafruit Feather M0 with RFM95
 RH_RF95 rf95(8, 3);
 DW3000_Interface DW_interface;
+USB_Interface USB_interface;
 
 TRIA_ID id = TRIA_ID(trackee, 1);
 uint8_t send_buffer[TRIA_GenericPacket::PACKED_SIZE];
@@ -22,41 +25,6 @@ uint8_t recv_buffer[TRIA_GenericPacket::PACKED_SIZE];
 TRIA_RangeReport cached_request;
 TRIA_RangeReport cached_response;
 TRIA_RangeReport cached_report;
-
-volatile unsigned measure_counter = 0;
-volatile bool measure_received = false;
-
-// TODO: Sollte in eigene Datei, weil DW3000_Interface die Logik auch braucht (Janis)
-bool packet_ok(uint8_t* nw_bytes, uint8_t received_length, TRIA_ID& receiver_id) {
-  if (received_length > TRIA_GenericPacket::PACKED_SIZE) {
-    return false;
-  }
-
-  TRIA_Action a;
-  a.initialise_from_buffer(nw_bytes);
-
-  switch (a.value()) {
-    case range_request:
-      if (received_length != TRIA_RangeRequest::PACKED_SIZE) { return false; }
-      break;
-    case range_response:
-      if (received_length != TRIA_RangeResponse::PACKED_SIZE) { return false; }
-      break;
-    case range_report:
-      if (received_length != TRIA_RangeReport::PACKED_SIZE) { return false; }
-      break;
-    default: VERIFY_NOT_REACHED();
-  }
-
-  TRIA_ID receive_mask;
-  receive_mask.initialise_from_buffer(nw_bytes + TRIA_Action::PACKED_SIZE +
-                                      TRIA_ID::PACKED_SIZE);
-  if (!receiver_id.matches_mask(receive_mask)) {
-    return false;
-  }
-
-  return true;
-}
 
 void lora_send_packet(TRIA_GenericPacket &packet) {
   packet.pack_into(send_buffer);
@@ -70,8 +38,15 @@ void recv_handler(const dwt_cb_data_t *cb_data) {
     return;
   }
 
-  measure_counter++;
-  measure_received = true;
+#ifdef DEBUG
+  Serial.print("Habe Report bekommen: ");
+  cached_report.print();
+  Serial.print("\n");
+#endif
+
+  if (id.is_coordinator() && !USB_interface.schedule_full()) {
+    USB_interface.schedule_report(cached_report);
+  }
 }
 
 void setup() {
@@ -82,15 +57,30 @@ void setup() {
   pinMode(SPI_chipselect, OUTPUT);
   SPI.begin();
 
+#ifdef DEBUG
   Serial.begin(9600);
-  while (!Serial);
-  
+  while (!Serial)
+    ;
+
+#ifdef SENDER
+  Serial.println("Sender");
+#else
+  Serial.println("Receiver");
+#endif
+
+#endif
+
   DW_interface = DW3000_Interface(id, recv_handler);
   VERIFY(rf95.init());
 }
 
-
 void loop() {
+  if (id.is_coordinator() &&
+      (USB_interface.schedule_full() || USB_interface.schedule_likely_finished())) {
+    USB_interface.send_scheduled_reports();
+    USB_interface.schedule_reset();
+  }
+
   if (rf95.available()) {
     uint8_t recv_length = 0;
     if (!rf95.recv(recv_buffer, &recv_length)) {
@@ -112,17 +102,22 @@ void loop() {
       default: VERIFY_NOT_REACHED();
     }
 
-    // TODO: wenn Range Request und von Coordinator geschickt, dann selbst weiterversenden (Janis)
-    // measure_counter muss hier wieder zurückgesetzt werden.
-    
-    // TODO: wenn Range Report und man selbst Coordinator ist, dann über USB an Data Team schicken (Greta/Simon)
-    // FIXME: Können wir nicht einzeln rüberschicken, weil wir vorher wissen müssen, ob überhaupt 3 Messungen
-    // ankommen, wir sollten also bei jedem Check die Differenz von der aktuellen Zeit und der Ankunftszeit des
-    // letzten Pakets berechnen und damit entscheiden, ob wir alle bisherigen Pakete rübersenden sollen. 
-    if (measure_received && measure_counter <= 3) {
-      measure_received = false;
+    if (received->is_type(range_request) && received->received_from().is_coordinator()) {
+      // FIXME: Ist im Moment nicht schlimm, aber eigentlich sollte der Empfänger aus der
+      // von der Coordinator gesendeten Request weiterverwendet werden.
+      TRIA_RangeRequest repeated = TRIA_RangeRequest(id, TRIA_ID(tracker));
+      lora_send_packet(repeated);
     }
   }
 
-  // TODO: wenn man selbst Coordinator ist, dann Annahme von Commands über USB und Ausführung (Greta/Simon)
+  if (id.is_coordinator() && USB_interface.measurement_requested()) {
+    TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(trackee));
+    lora_send_packet(request);
+  }
+
+#ifdef SENDER
+  TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(0));
+  DW_interface.send_packet(&request);
+  delay(500);
+#endif
 }

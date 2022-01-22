@@ -23,7 +23,7 @@ public:
   static const size_t FIELD_COUNT = 5;
 
   bool is_type(action a);
-  bool is_addressed_to(TRIA_ID id);
+  bool is_addressed_to(TRIA_ID &id);
   TRIA_ID sent_to() { return *(TRIA_ID *)m_fields[receiver_id_position]; }
   TRIA_ID received_from() { return *(TRIA_ID *)m_fields[sender_id_position]; }
 

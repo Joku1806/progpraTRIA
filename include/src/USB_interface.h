@@ -1,25 +1,27 @@
 #include <src/DW3000_interface.h>
 
 class USB_Interface {
-  public:
-    static const unsigned MAX_ENTRIES = 3;
-    static const uint8_t MEASURE_COMMAND = 0xff;
+public:
+  static const unsigned MAX_ENTRIES = 3;
+  static const uint8_t MEASURE_COMMAND = 0xff;
 
-    USB_Interface() {};
-    
-    bool measurement_requested();
+  static const unsigned MAX_DELAY_US = 14; // 4000m / c_air von s => us
 
-    bool schedule_full();
-    bool schedule_likely_finished();
-    void schedule_report(TRIA_RangeReport& r);
-    void send_scheduled_reports();
-    void schedule_reset();
+  USB_Interface() {};
 
-  private:
-    bool m_last_insert_time_valid;
-    unsigned m_last_insert_time;
-    unsigned m_index;
-    uint8_t m_data[MAX_ENTRIES * TRIA_RangeReport::PACKED_SIZE];
+  bool measurement_requested();
+
+  bool schedule_full();
+  bool schedule_likely_finished();
+  void schedule_report(TRIA_RangeReport &r);
+  void send_scheduled_reports();
+  void schedule_reset();
+
+private:
+  volatile bool m_last_insert_time_valid;
+  volatile unsigned m_last_insert_time;
+  volatile unsigned m_index;
+  uint8_t m_data[MAX_ENTRIES * TRIA_RangeReport::PACKED_SIZE];
 };
 
 int get_repnum();

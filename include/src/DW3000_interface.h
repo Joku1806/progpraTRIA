@@ -13,8 +13,10 @@ public:
   static const size_t SPI_FASTRATE = 10000000;
   // so groß, dass das VERIFY in send_packet()
   // nicht mehr getriggert wird.
-  // glaube in Einheit von 8ns
-  static const uint32_t SEND_DELAY = 90000;
+  // in Einheit von 8ns, siehe API Guide S. 44
+  // Benchmark von Delayed TX Code ist max. 800us
+  // => 800000ns => 100000 delay
+  static const uint32_t SEND_DELAY = 100000;
 
   DW3000_Interface() {};
   DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data));

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <SPI.h>
+#include <TRIA_helper.h>
 #include <decadriver/deca_regs.h>
 #include <lib/assertions.h>
 #include <platform/deca_spi.h>
@@ -25,23 +26,19 @@ void DW3000_Interface::save_tx_stamp() {
 }
 
 bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out) {
-  VERIFY(received_bytes - FCS_LEN <= TRIA_GenericPacket::PACKED_SIZE);
   dwt_readrxdata(m_packet_buffer, received_bytes - FCS_LEN, 0);
+  if (!packet_ok(m_packet_buffer, received_bytes - FCS_LEN, m_id)) {
+#ifdef DEBUG
+    Serial.println("Empfangenes Paket hat falsches Format oder ist nicht an mich adressiert.");
+    Serial.print("Netzwerkrepräsentation:");
 
-  TRIA_Action a;
-  a.initialise_from_buffer(m_packet_buffer);
-  VERIFY(a.value() != range_report);
+    for (size_t i = 0; i < received_bytes - FCS_LEN; i++) {
+      Serial.print(" 0x");
+      Serial.print(m_packet_buffer[i], HEX);
+    }
+    Serial.print("\n");
+#endif
 
-  switch (a.value()) {
-    case range_request: VERIFY(received_bytes - FCS_LEN == TRIA_RangeRequest::PACKED_SIZE); break;
-    case range_response: VERIFY(received_bytes - FCS_LEN == TRIA_RangeResponse::PACKED_SIZE); break;
-    default: VERIFY_NOT_REACHED();
-  }
-
-  TRIA_ID receive_mask;
-  receive_mask.initialise_from_buffer(m_packet_buffer + TRIA_Action::PACKED_SIZE +
-                                      TRIA_ID::PACKED_SIZE);
-  if (!m_id.matches_mask(receive_mask)) {
     dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
     return false;
   }
@@ -49,7 +46,10 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   save_rx_stamp();
 
   TRIA_GenericPacket *received;
-  switch (a.value()) {
+  TRIA_Action action;
+  action.initialise_from_buffer(m_packet_buffer);
+
+  switch (action.value()) {
     case range_request: received = &m_cached_range_request; break;
     case range_response: received = &m_cached_range_response; break;
     default: VERIFY_NOT_REACHED();
@@ -57,6 +57,12 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
 
   received->initialise_from_buffer(m_packet_buffer);
   dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
+
+#ifdef DEBUG
+  Serial.print("Paket empfangen: ");
+  received->print();
+  Serial.print("\n");
+#endif
 
   if (received->is_type(range_request)) {
     auto response = TRIA_RangeResponse(m_id, received->received_from(), m_rx_stamp);
@@ -71,65 +77,14 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   }
 }
 
-// equivalent zu handle_incoming_packet(), außer dass Daten nicht
-// aus dem rx buffer eingelesen werden, sondern die Daten benutzt
-// werden, die der vorherige send_packet() call in m_packet_buffer
-// geschrieben hat. Außerdem wird die Systemzeit als rx stamp benutzt.
-bool DW3000_Interface::receive_packet_mock(size_t received_bytes, TRIA_RangeReport &out) {
-  uint64_t mocked_recv = static_cast<uint64_t>(dwt_readsystimestamphi32()) << 8;
-  m_rx_stamp.initialise_from_buffer_no_bswap((uint8_t *)(&mocked_recv));
-
-  VERIFY(received_bytes - FCS_LEN <= TRIA_GenericPacket::PACKED_SIZE);
-
-  TRIA_Action a;
-  a.initialise_from_buffer(m_packet_buffer);
-  VERIFY(a.value() != range_report);
-
-  switch (a.value()) {
-    case range_request: VERIFY(received_bytes - FCS_LEN == TRIA_RangeRequest::PACKED_SIZE); break;
-    case range_response: VERIFY(received_bytes - FCS_LEN == TRIA_RangeResponse::PACKED_SIZE); break;
-    default: VERIFY_NOT_REACHED();
-  }
-
-  TRIA_ID receive_mask;
-  receive_mask.initialise_from_buffer(m_packet_buffer + TRIA_Action::PACKED_SIZE +
-                                      TRIA_ID::PACKED_SIZE);
-  if (!m_id.matches_mask(receive_mask)) {
-    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
-    return false;
-  }
-
-  TRIA_GenericPacket *received = nullptr;
-  switch (a.value()) {
-    case range_request: received = &m_cached_range_request; break;
-    case range_response: received = &m_cached_range_response; break;
-    default: VERIFY_NOT_REACHED();
-  }
-  received->initialise_from_buffer(m_packet_buffer);
-  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
-
-  if (received->is_type(range_request)) {
-    auto response = TRIA_RangeResponse(m_id, received->received_from(), m_rx_stamp);
-    send_packet(&response);
-    return false;
-  } else {
-    TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
-    TRIA_Stamp measured_tx = static_cast<TRIA_RangeResponse *>(received)->get_tx_stamp();
-    m_rx_stamp = m_rx_stamp - (measured_tx - measured_rx);
-    out = TRIA_RangeReport(received->received_from(), m_id, m_rx_stamp, m_tx_stamp);
-    return true;
-  }
-}
-
 void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
   VERIFY(!packet->is_type(range_report));
   // Wir wissen nicht, ob wir diese Funktion in einem Interrupt oder im normalen
   // Programmablauf aufrufen, deswegen gehen wir von dem Fall aus, der etwas kaputtmachen könnte,
   // d.h. ein send() aus dem Interruptmodus unterbricht ein normales send(). Deswegen schalten wir
-  // direkt nach diesem Aufruf (der Interrupts wieder anschaltet), Interrupts wieder aus, damit das nicht
-  // vorkommen kann.
-  // Falls es trotzdem irgendwelche Probleme gibt, bleibt uns nicht anderes übrig, als zwei separate
-  // Sendefunktionen zu haben.
+  // direkt nach diesem Aufruf (der Interrupts wieder anschaltet), Interrupts wieder aus, damit das
+  // nicht vorkommen kann. Falls es trotzdem irgendwelche Probleme gibt, bleibt uns nicht anderes
+  // übrig, als zwei separate Sendefunktionen zu haben.
   dwt_forcetrxoff();
   decaIrqStatus_t stat = decamutexon();
 
@@ -158,8 +113,14 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
   save_tx_stamp();
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
+#ifdef DEBUG
+  Serial.print("Paket gesendet: ");
+  packet->print();
+  Serial.print("\n");
+#endif
+
   dwt_forcetrxoff();
   // Default Modus ist receive, deswegen nach Senden wieder direkt dahin zurückschalten
-  dwt_writefastCMD(DWT_START_RX_IMMEDIATE);
+  dwt_writefastCMD(CMD_RX);
   decamutexoff(stat);
 }
