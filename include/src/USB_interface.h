@@ -18,9 +18,9 @@ class USB_Interface {
     void schedule_reset();
 
   private:
-    bool m_last_insert_time_valid;
-    unsigned m_last_insert_time;
-    unsigned m_index;
+    volatile bool m_last_insert_time_valid;
+    volatile unsigned m_last_insert_time;
+    volatile unsigned m_index;
     uint8_t m_data[MAX_ENTRIES * TRIA_RangeReport::PACKED_SIZE];
 };
 

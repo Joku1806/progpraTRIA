@@ -10,11 +10,13 @@
 #include <platform/pin_mappings.h>
 #include <lib/assertions.h>
 #include <src/DW3000_interface.h>
+#include <src/USB_interface.h>
 #include <TRIA_helper.h>
 
 // Adafruit Feather M0 with RFM95
 RH_RF95 rf95(8, 3);
 DW3000_Interface DW_interface;
+USB_Interface USB_interface;
 
 TRIA_ID id = TRIA_ID(trackee, 1);
 uint8_t send_buffer[TRIA_GenericPacket::PACKED_SIZE];
@@ -24,9 +26,6 @@ TRIA_RangeReport cached_request;
 TRIA_RangeReport cached_response;
 TRIA_RangeReport cached_report;
 
-volatile unsigned measure_counter = 0;
-volatile bool measure_received = false;
-
 void lora_send_packet(TRIA_GenericPacket &packet) {
   packet.pack_into(send_buffer);
   rf95.send(send_buffer, packet.packed_size());
@@ -34,15 +33,21 @@ void lora_send_packet(TRIA_GenericPacket &packet) {
 }
 
 void recv_handler(const dwt_cb_data_t *cb_data) {
-  Serial.println("Habe Interrupt bekommen.");
   auto got_report = DW_interface.handle_incoming_packet(cb_data->datalength, cached_report);
   if (!got_report) {
     return;
   }
 
+#ifdef DEBUG
+  Serial.print("Habe Report bekommen: ");
   cached_report.print();
-  measure_counter++;
-  measure_received = true;
+  Serial.print("\n");
+#endif
+
+
+  if (id.is_coordinator() && !USB_interface.schedule_full()) {
+    USB_interface.schedule_report(cached_report);
+  }
 }
 
 void setup() {
@@ -53,6 +58,7 @@ void setup() {
   pinMode(SPI_chipselect, OUTPUT);
   SPI.begin();
 
+#ifdef DEBUG
   Serial.begin(9600);
   while (!Serial);
   
@@ -62,12 +68,19 @@ void setup() {
   Serial.println("Receiver");
 #endif
 
+#endif
+
   DW_interface = DW3000_Interface(id, recv_handler);
   VERIFY(rf95.init());
 }
 
 
 void loop() {
+  if (id.is_coordinator() && (USB_interface.schedule_full() || USB_interface.schedule_likely_finished())) {
+    USB_interface.send_scheduled_reports();
+    USB_interface.schedule_reset();
+  }
+  
   if (rf95.available()) {
     uint8_t recv_length = 0;
     if (!rf95.recv(recv_buffer, &recv_length)) {
@@ -89,22 +102,22 @@ void loop() {
       default: VERIFY_NOT_REACHED();
     }
 
-    // TODO: wenn Range Request und von Coordinator geschickt, dann selbst weiterversenden (Janis)
-    // measure_counter muss hier wieder zurückgesetzt werden.
-    
-    // TODO: wenn Range Report und man selbst Coordinator ist, dann über USB an Data Team schicken (Greta/Simon)
-    // FIXME: Können wir nicht einzeln rüberschicken, weil wir vorher wissen müssen, ob überhaupt 3 Messungen
-    // ankommen, wir sollten also bei jedem Check die Differenz von der aktuellen Zeit und der Ankunftszeit des
-    // letzten Pakets berechnen und damit entscheiden, ob wir alle bisherigen Pakete rübersenden sollen. 
-    if (measure_received && measure_counter <= 3) {
-      measure_received = false;
+    if (received->is_type(range_request) && received->received_from().is_coordinator()) {
+      // FIXME: Ist im Moment nicht schlimm, aber eigentlich sollte der Empfänger aus der
+      // von der Coordinator gesendeten Request weiterverwendet werden.
+      TRIA_RangeRequest repeated = TRIA_RangeRequest(id, TRIA_ID(tracker));
+      lora_send_packet(repeated);
     }
   }
 
-  // TODO: wenn man selbst Coordinator ist, dann Annahme von Commands über USB und Ausführung (Greta/Simon)
-  #ifdef SENDER
+  if (id.is_coordinator() && USB_interface.measurement_requested()) {
+    TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(trackee));
+    lora_send_packet(request);
+  }
+
+#ifdef SENDER
   TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(0));
   DW_interface.send_packet(&request);
   delay(500);
-  #endif
+#endif
 }
