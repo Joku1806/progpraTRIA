@@ -68,8 +68,9 @@ class StampPacketReader:
         # speed of light in air = 299702458.0 m/s
         # or, if you ask wolfram  299709000 m/2
         # mein tafelwerk sagt     299711000 m/2
-        magicalconversionnumber = (128*499.2*10**6)
-        
+        #magicalconversionnumber = (128*499.2*10**6)
+        #ToF_s = (RX - TX) * 15.65 picoseconds  / 1000000000000
+        magicalconversionnumber = 15.65 / 1000000000000
         ID=0
         TOF=0
         
