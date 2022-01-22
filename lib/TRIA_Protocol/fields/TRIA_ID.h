@@ -16,8 +16,13 @@ public:
   TRIA_ID() : m_id(0) {};
   TRIA_ID(uint8_t id) : m_id(id) {};
   TRIA_ID(TRIA_dev_type type, uint8_t id) : m_id(type | (id & 0x1f)) {};
+  
   TRIA_dev_type type();
   uint8_t id();
+  bool is_tracker();
+  bool is_trackee();
+  bool is_coordinator();
+
   bool matches_mask(TRIA_ID& mask);
 
   size_t pack_into(uint8_t *bytes) override;
