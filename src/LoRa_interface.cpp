@@ -19,8 +19,8 @@ DW3000_Interface DW_interface;
 USB_Interface USB_interface;
 
 TRIA_ID id;
-uint8_t send_buffer[TRIA_GenericPacket::PACKED_SIZE];
 uint8_t recv_buffer[TRIA_GenericPacket::PACKED_SIZE];
+uint8_t send_buffer[TRIA_GenericPacket::PACKED_SIZE];
 
 TRIA_RangeReport cached_request;
 TRIA_RangeReport cached_response;
@@ -50,8 +50,7 @@ void build_id() {
 
 void lora_send_packet(TRIA_GenericPacket &packet) {
   packet.pack_into(send_buffer);
-  rf95.send(send_buffer, packet.packed_size());
-  rf95.waitPacketSent();
+  VERIFY(rf95.send(send_buffer, packet.packed_size()));
 }
 
 void recv_handler(const dwt_cb_data_t *cb_data) {
