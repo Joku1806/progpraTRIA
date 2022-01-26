@@ -18,13 +18,35 @@ RH_RF95 rf95(8, 3);
 DW3000_Interface DW_interface;
 USB_Interface USB_interface;
 
-TRIA_ID id = TRIA_ID(trackee, 1);
+TRIA_ID id;
 uint8_t send_buffer[TRIA_GenericPacket::PACKED_SIZE];
 uint8_t recv_buffer[TRIA_GenericPacket::PACKED_SIZE];
 
 TRIA_RangeReport cached_request;
 TRIA_RangeReport cached_response;
 TRIA_RangeReport cached_report;
+
+void build_id() {
+  uint8_t type = 0;
+
+#ifdef TRACKER
+  type |= tracker;
+#endif
+
+#ifdef TRACKEE
+  type |= trackee;
+#endif
+
+#ifdef COORDINATOR
+  type |= coordinator;
+#endif
+
+#ifdef UNIT_ID
+  id = TRIA_ID(static_cast<TRIA_dev_type>(type), UNIT_ID);
+#else
+  id = TRIA_ID(static_cast<TRIA_dev_type>(type), 1);
+#endif
+}
 
 void lora_send_packet(TRIA_GenericPacket &packet) {
   packet.pack_into(send_buffer);
@@ -61,17 +83,10 @@ void setup() {
 
 #ifdef DEBUG
   Serial.begin(9600);
-  while (!Serial)
-    ;
-
-#ifdef SENDER
-  Serial.println("Sender");
-#else
-  Serial.println("Receiver");
+  while (!Serial) {};
 #endif
 
-#endif
-
+  build_id();
   DW_interface = DW3000_Interface(id, recv_handler);
   VERIFY(rf95.init());
 }
@@ -116,10 +131,4 @@ void loop() {
     TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(trackee));
     lora_send_packet(request);
   }
-
-#ifdef SENDER
-  TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(0));
-  DW_interface.send_packet(&request);
-  delay(500);
-#endif
 }
