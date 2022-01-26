@@ -22,6 +22,8 @@ class StampPacketReader:
             # erst in Picosekunden und dann in Sekunden umrechnen.
             # Es kann sein, dass wegen "Rauschen" die ToF negativ ist, das ist
             # natürlich nicht möglich, deswegen gehen wir in dem Fall von 0 aus.
+            # FIXME: Deckt im Moment nicht den Fall ab, dass der Timer während
+            # der Messung überläuft.
             ToF_s = max(rxtime - txtime, 0) * 15.65 / 1000000000000
             measures.append({"id": sendid, 'tof': ToF_s})
 
