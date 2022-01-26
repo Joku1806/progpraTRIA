@@ -3,7 +3,7 @@ import struct, serial, json, time
 class StampPacketReader:
     # prüft erst, ob der Port übereinstimmt
     SERIAL_PORT = '/dev/ttyACM0'
-    SEND_SIGNAL = 0xff.to_bytes(1, "little")
+    SEND_SIGNAL = 0x6D # m
     PACKET_SIZE = 19
     MAX_MEASURE_TIMEDIFF = 0x6819f
 

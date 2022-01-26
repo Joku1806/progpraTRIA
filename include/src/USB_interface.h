@@ -3,7 +3,7 @@
 class USB_Interface {
 public:
   static const unsigned MAX_ENTRIES = 3;
-  static const uint8_t MEASURE_COMMAND = 0xff;
+  static const uint8_t MEASURE_COMMAND = 0x6D; // m
 
   static const unsigned MAX_DELAY_US = 14; // 4000m / c_air von s => us
 
