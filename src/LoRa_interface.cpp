@@ -94,6 +94,9 @@ void setup() {
 void loop() {
   if (id.is_coordinator() &&
       (USB_interface.schedule_full() || USB_interface.schedule_likely_finished())) {
+#ifdef DEBUG
+    Serial.println("Requested Measurements are done, sending to data team.");
+#endif
     USB_interface.send_scheduled_reports();
     USB_interface.schedule_reset();
   }
@@ -101,10 +104,18 @@ void loop() {
   if (rf95.available()) {
     uint8_t recv_length = 0;
     if (!rf95.recv(recv_buffer, &recv_length)) {
+#ifdef DEBUG
+      Serial.println("Couldn't receive message using LoRa radio.");
+#endif
+
       return;
     }
 
     if (!packet_ok(recv_buffer, recv_length, id)) {
+#ifdef DEBUG
+      Serial.println("Received packet is not in a valid format or not intended for us.");
+#endif
+
       return;
     }
 
@@ -120,12 +131,19 @@ void loop() {
     }
 
     if (received->is_type(range_request) && received->received_from().is_coordinator()) {
+#ifdef DEBUG
+      Serial.println("Got forwarded measurement request from coordinator.");
+#endif
+
       TRIA_RangeRequest repeated = TRIA_RangeRequest(id, TRIA_ID(tracker));
       lora_send_packet(repeated);
     }
   }
 
   if (id.is_coordinator() && USB_interface.measurement_requested()) {
+#ifdef DEBUG
+    Serial.println("Got measurement request from data team.");
+#endif
     TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(trackee));
     lora_send_packet(request);
   }
