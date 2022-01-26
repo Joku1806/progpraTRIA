@@ -81,7 +81,7 @@ void setup() {
   pinMode(SPI_chipselect, OUTPUT);
   SPI.begin();
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(COORDINATOR)
   Serial.begin(9600);
   while (!Serial) {};
 #endif
