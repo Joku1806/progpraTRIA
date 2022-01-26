@@ -20,3 +20,10 @@ void TRIA_RangeReport::print() {
   Serial.print(distance);
   Serial.print("m.\n");
 }
+
+void TRIA_RangeReport::print_distance() {
+  TRIA_Stamp dt = get_rx_stamp() - get_tx_stamp();
+  double distance = dt.value() * 0.00234517173385;
+  Serial.print(distance, 10);
+  Serial.print("\n");
+}

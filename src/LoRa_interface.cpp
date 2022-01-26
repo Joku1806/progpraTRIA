@@ -44,6 +44,8 @@ void recv_handler(const dwt_cb_data_t *cb_data) {
   Serial.print("\n");
 #endif
 
+  cached_report.print_distance();
+
   if (id.is_coordinator() && !USB_interface.schedule_full()) {
     USB_interface.schedule_report(cached_report);
   }

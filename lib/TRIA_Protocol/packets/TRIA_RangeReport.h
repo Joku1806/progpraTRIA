@@ -44,6 +44,8 @@ public:
   TRIA_Stamp get_rx_stamp() { return m_rx_stamp; }
   TRIA_Stamp get_tx_stamp() { return m_tx_stamp; }
 
+  void print_distance();
+
 private:
   TRIA_Action m_action;
   TRIA_ID m_sender_id;
