@@ -120,8 +120,6 @@ void loop() {
     }
 
     if (received->is_type(range_request) && received->received_from().is_coordinator()) {
-      // FIXME: Ist im Moment nicht schlimm, aber eigentlich sollte der Empfänger aus der
-      // von der Coordinator gesendeten Request weiterverwendet werden.
       TRIA_RangeRequest repeated = TRIA_RangeRequest(id, TRIA_ID(tracker));
       lora_send_packet(repeated);
     }
