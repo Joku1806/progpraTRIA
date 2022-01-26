@@ -3,8 +3,9 @@
 #include <src/USB_interface.h>
 
 bool USB_Interface::measurement_requested() {
-  if (!Serial.available())
+  if (!Serial.available()) {
     return false;
+  }
 
   uint8_t command;
   Serial.readBytes((char *)&command, 1);
