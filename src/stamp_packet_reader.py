@@ -22,7 +22,7 @@ class StampPacketReader:
             timediff = 0
             if rx_time >= tx_time:
                 timediff = rx_time - tx_time
-            elif tx_time - rx_time > MAX_MEASURE_TIMEDIFF:
+            elif tx_time - rx_time > self.MAX_MEASURE_TIMEDIFF:
                 # Timer Overflow während der Messung, Prüfwert wurde durch
                 # maximale Distanz von 2km mit (2000m / c_air) / 15.65 * 1000000000000
                 # berechnet.
