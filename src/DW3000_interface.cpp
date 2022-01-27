@@ -66,7 +66,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
 
   if (received->is_type(range_request)) {
     auto response = TRIA_RangeResponse(m_id, received->received_from(), m_rx_stamp);
-    send_packet(&response);
+    send_packet(response);
     return false;
   } else if (received->is_type(range_report)) {
     TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
@@ -77,8 +77,8 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   }
 }
 
-void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
-  VERIFY(!packet->is_type(range_report));
+void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
+  VERIFY(!packet.is_type(range_report));
   // Wir wissen nicht, ob wir diese Funktion in einem Interrupt oder im normalen
   // Programmablauf aufrufen, deswegen gehen wir von dem Fall aus, der etwas kaputtmachen könnte,
   // d.h. ein send() aus dem Interruptmodus unterbricht ein normales send(). Deswegen schalten wir
@@ -88,23 +88,23 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket *packet) {
   dwt_forcetrxoff();
   decaIrqStatus_t stat = decamutexon();
 
-  if (packet->is_type(range_request)) {
-    VERIFY(packet->packed_size() == TRIA_RangeRequest::PACKED_SIZE);
-    packet->pack_into(m_packet_buffer);
-    VERIFY(dwt_writetxdata(packet->packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
-    dwt_writetxfctrl(packet->packed_size() + FCS_LEN, 0, 0);
+  if (packet.is_type(range_request)) {
+    VERIFY(packet.packed_size() == TRIA_RangeRequest::PACKED_SIZE);
+    packet.pack_into(m_packet_buffer);
+    VERIFY(dwt_writetxdata(packet.packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
+    dwt_writetxfctrl(packet.packed_size() + FCS_LEN, 0, 0);
     VERIFY(dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
-  } else if (packet->is_type(range_response)) {
-    VERIFY(packet->packed_size() == TRIA_RangeResponse::PACKED_SIZE);
+  } else if (packet.is_type(range_response)) {
+    VERIFY(packet.packed_size() == TRIA_RangeResponse::PACKED_SIZE);
     uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
     uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
     uint64_t send_time_hi32 = sys_time_hi32 + SEND_DELAY;
     auto tx = TRIA_Stamp((send_time_hi32 << 8) + antenna_delay);
-    (static_cast<TRIA_RangeResponse *>(packet))->set_tx_stamp(tx);
+    (static_cast<TRIA_RangeResponse &>(packet)).set_tx_stamp(tx);
 
-    packet->pack_into(m_packet_buffer);
-    VERIFY(dwt_writetxdata(packet->packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
-    dwt_writetxfctrl(packet->packed_size() + FCS_LEN, 0, 0);
+    packet.pack_into(m_packet_buffer);
+    VERIFY(dwt_writetxdata(packet.packed_size(), m_packet_buffer, 0) == DWT_SUCCESS);
+    dwt_writetxfctrl(packet.packed_size() + FCS_LEN, 0, 0);
     dwt_setdelayedtrxtime(send_time_hi32);
     VERIFY(dwt_starttx(DWT_START_TX_DELAYED) == DWT_SUCCESS);
   }

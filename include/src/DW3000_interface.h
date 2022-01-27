@@ -26,7 +26,7 @@ public:
 
   bool handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out);
   bool receive_packet_mock(size_t received_bytes, TRIA_RangeReport &out);
-  void send_packet(TRIA_GenericPacket *packet);
+  void send_packet(TRIA_GenericPacket &packet);
 
 private:
   TRIA_ID m_id;
