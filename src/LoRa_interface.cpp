@@ -139,7 +139,9 @@ void loop() {
     }
 
     if (received->is_type(range_report) && id.is_coordinator() && !USB_interface.schedule_full()) {
+#ifdef DEBUG
       Serial.println("Scheduling received range report.");
+#endif
       USB_interface.schedule_report(*static_cast<TRIA_RangeReport *>(received));
     }
   }
