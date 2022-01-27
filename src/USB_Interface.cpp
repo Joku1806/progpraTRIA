@@ -39,9 +39,6 @@ void USB_Interface::schedule_reset() {
 }
 
 void USB_Interface::send_scheduled_reports() {
-  // FIXME: wir hätten hier ein Problem, wenn m_index = UINT_MAX,
-  // aber das kommt hoffentlich nirgendwann vor :^)
-  unsigned measure_count = m_index + 1;
-  Serial.write((uint8_t *)(&measure_count), sizeof(measure_count));
-  Serial.write(m_data, measure_count * TRIA_RangeReport::PACKED_SIZE);
+  Serial.write((uint8_t *)(&m_index), sizeof(m_index));
+  Serial.write(m_data, m_index * TRIA_RangeReport::PACKED_SIZE);
 }
