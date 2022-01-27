@@ -21,8 +21,8 @@ TRIA_ID id;
 uint8_t recv_buffer[TRIA_GenericPacket::PACKED_SIZE];
 uint8_t send_buffer[TRIA_GenericPacket::PACKED_SIZE];
 
-TRIA_RangeReport cached_request;
-TRIA_RangeReport cached_response;
+TRIA_RangeRequest cached_request;
+TRIA_RangeResponse cached_response;
 TRIA_RangeReport cached_report;
 
 void build_id() {
@@ -60,20 +60,8 @@ void lora_send_packet(TRIA_GenericPacket &packet) {
 
 void recv_handler(const dwt_cb_data_t *cb_data) {
   auto got_report = DW_interface.handle_incoming_packet(cb_data->datalength, cached_report);
-  if (!got_report) {
-    return;
-  }
-
-#ifdef DEBUG
-  Serial.print("Habe Report bekommen: ");
-  cached_report.print();
-  Serial.print("\n");
-#endif
-
-  cached_report.print_distance();
-
-  if (id.is_coordinator() && !USB_interface.schedule_full()) {
-    USB_interface.schedule_report(cached_report);
+  if (got_report) {
+    lora_send_packet(cached_report);
   }
 }
 
@@ -106,7 +94,7 @@ void loop() {
   }
 
   if (rf95.available()) {
-    uint8_t recv_length = 0;
+    uint8_t recv_length = sizeof(recv_buffer);
     if (!rf95.recv(recv_buffer, &recv_length)) {
 #ifdef DEBUG
       Serial.println("Couldn't receive message using LoRa radio.");
@@ -133,6 +121,7 @@ void loop() {
       case range_report: received = &cached_report; break;
       default: VERIFY_NOT_REACHED();
     }
+    received->initialise_from_buffer(recv_buffer);
 
 #ifdef DEBUG
     Serial.print("Paket empfangen (LoRa): ");
@@ -146,7 +135,12 @@ void loop() {
 #endif
 
       TRIA_RangeRequest repeated = TRIA_RangeRequest(id, TRIA_ID(tracker));
-      lora_send_packet(repeated);
+      DW_interface.send_packet(repeated);
+    }
+
+    if (received->is_type(range_report) && id.is_coordinator() && !USB_interface.schedule_full()) {
+      Serial.println("Scheduling received range report.");
+      USB_interface.schedule_report(*static_cast<TRIA_RangeReport *>(received));
     }
   }
 
