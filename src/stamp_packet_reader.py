@@ -34,7 +34,8 @@ class StampPacketReader:
 
             # Berechnete Zeitdifferenz ist in nativer Clock-Zeit, deswegen
             # erst in Picosekunden und dann in Sekunden umrechnen.
-            ToF_s = timediff * 15.65 / 1000000000000
+            # Durch 2 teilen, weil nur der Hinweg gebraucht wird
+            ToF_s = timediff * 15.65 / 2000000000000
             measures.append({"id": sender_id, 'tof': ToF_s})
 
         wrapped = {"mcus": measures}
