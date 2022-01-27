@@ -29,14 +29,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   dwt_readrxdata(m_packet_buffer, received_bytes - FCS_LEN, 0);
   if (!packet_ok(m_packet_buffer, received_bytes - FCS_LEN, m_id)) {
 #ifdef DEBUG
-    Serial.println("Empfangenes Paket hat falsches Format oder ist nicht an mich adressiert.");
-    Serial.print("Netzwerkrepräsentation:");
-
-    for (size_t i = 0; i < received_bytes - FCS_LEN; i++) {
-      Serial.print(" 0x");
-      Serial.print(m_packet_buffer[i], HEX);
-    }
-    Serial.print("\n");
+    Serial.println("Empfangenes Paket hat falsches Format oder ist nicht an uns adressiert.");
 #endif
 
     dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
@@ -59,7 +52,7 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
 
 #ifdef DEBUG
-  Serial.print("Paket empfangen: ");
+  Serial.print("Paket empfangen (DW): ");
   received->print();
   Serial.print("\n");
 #endif
@@ -114,8 +107,8 @@ void DW3000_Interface::send_packet(TRIA_GenericPacket &packet) {
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
 #ifdef DEBUG
-  Serial.print("Paket gesendet: ");
-  packet->print();
+  Serial.print("Paket gesendet (DW): ");
+  packet.print();
   Serial.print("\n");
 #endif
 

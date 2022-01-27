@@ -13,7 +13,6 @@
 #include <src/DW3000_interface.h>
 #include <src/USB_interface.h>
 
-// Adafruit Feather M0 with RFM95
 RH_RF95 rf95(8, 3);
 DW3000_Interface DW_interface;
 USB_Interface USB_interface;
@@ -49,6 +48,12 @@ void build_id() {
 }
 
 void lora_send_packet(TRIA_GenericPacket &packet) {
+#ifdef DEBUG
+  Serial.print("Paket gesendet (LoRa): ");
+  packet.print();
+  Serial.print("\n");
+#endif
+
   packet.pack_into(send_buffer);
   VERIFY(rf95.send(send_buffer, packet.packed_size()));
 }
@@ -128,6 +133,12 @@ void loop() {
       case range_report: received = &cached_report; break;
       default: VERIFY_NOT_REACHED();
     }
+
+#ifdef DEBUG
+    Serial.print("Paket empfangen (LoRa): ");
+    received->print();
+    Serial.print("\n");
+#endif
 
     if (received->is_type(range_request) && received->received_from().is_coordinator()) {
 #ifdef DEBUG
