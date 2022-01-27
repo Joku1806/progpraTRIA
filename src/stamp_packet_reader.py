@@ -16,7 +16,7 @@ class StampPacketReader:
         measures = []
         
         for _ in range(count):
-            measure_packed = self.informant.read(self.PACKET_SIZE, byteorder = 'little')
+            measure_packed = self.informant.read(self.PACKET_SIZE)
             (_, sender_id, _, rx_time, tx_time) = struct.unpack(">BBBQQ", measure_packed)
             
             timediff = 0
