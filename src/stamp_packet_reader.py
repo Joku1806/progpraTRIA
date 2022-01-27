@@ -11,7 +11,7 @@ class StampPacketReader:
         self.informant = serial.Serial(self.SERIAL_PORT, 9600)
         
     def receive(self):
-        self.informant.write(self.SEND_SIGNAL)
+        self.informant.write(struct.pack("<B", self.SEND_SIGNAL))
         count = int.from_bytes(self.informant.read(4), byteorder = 'little')
         measures = []
         
