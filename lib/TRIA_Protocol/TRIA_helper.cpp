@@ -7,7 +7,8 @@
 #include <packets/TRIA_RangeResponse.h>
 
 bool packet_ok(uint8_t *nw_bytes, uint8_t received_length, TRIA_ID &receiver_id) {
-  if (received_length > TRIA_GenericPacket::PACKED_SIZE) {
+  if (received_length < TRIA_Action::PACKED_SIZE + TRIA_ID::PACKED_SIZE * 2 ||
+      received_length > TRIA_GenericPacket::PACKED_SIZE) {
     return false;
   }
 
@@ -31,6 +32,13 @@ bool packet_ok(uint8_t *nw_bytes, uint8_t received_length, TRIA_ID &receiver_id)
       }
       break;
     default: VERIFY_NOT_REACHED();
+  }
+
+  // FIXME: Range Reports sollten stattdessen das gesamte Paket einbetten
+  // und eine eigene Receiver/Sender ID haben, dann muss man nicht diesen
+  // Hack machen.
+  if (receiver_id.is_coordinator() && a.value() == range_report) {
+    return true;
   }
 
   TRIA_ID receive_mask;
