@@ -27,12 +27,9 @@ void DW3000_Interface::save_tx_stamp() {
 
 bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out) {
   dwt_readrxdata(m_packet_buffer, received_bytes - FCS_LEN, 0);
-  if (!packet_ok(m_packet_buffer, received_bytes - FCS_LEN, m_id)) {
-#ifdef DEBUG
-    Serial.println("Empfangenes Paket hat falsches Format oder ist nicht an uns adressiert.");
-#endif
+  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
 
-    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
+  if (!packet_ok(m_packet_buffer, received_bytes - FCS_LEN, m_id)) {
     return false;
   }
 
@@ -49,7 +46,6 @@ bool DW3000_Interface::handle_incoming_packet(size_t received_bytes, TRIA_RangeR
   }
 
   received->initialise_from_buffer(m_packet_buffer);
-  dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_GOOD);
 
 #ifdef DEBUG
   Serial.print("Paket empfangen (DW): ");
