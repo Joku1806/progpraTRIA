@@ -1,5 +1,6 @@
 #pragma once
 
+#include <BinaryMessageStore.h>
 #include <SPI.h>
 #include <decadriver/deca_device_api.h>
 #include <packets/TRIA_GenericPacket.h>
@@ -19,18 +20,19 @@ public:
   static const uint32_t SEND_DELAY = 100000;
 
   DW3000_Interface() {};
-  DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data));
+  DW3000_Interface(void (*recv_handler)(const dwt_cb_data_t *cb_data));
 
-  void save_rx_stamp();
   void save_tx_stamp();
+  TRIA_Stamp get_tx_stamp();
 
-  bool handle_incoming_packet(size_t received_bytes, TRIA_RangeReport &out);
-  bool receive_packet_mock(size_t received_bytes, TRIA_RangeReport &out);
-  void send_packet(TRIA_GenericPacket &packet);
+  void store_received_message(const dwt_cb_data_t *cb_data);
+  bool unprocessed_messages_pending();
+  BinaryMessage get_first_unprocessed_message();
+
+  void send_range_request(TRIA_RangeRequest &request);
+  void send_range_response(TRIA_RangeResponse &response);
 
 private:
-  TRIA_ID m_id;
-
   uint8_t m_packet_buffer[TRIA_GenericPacket::PACKED_SIZE];
   uint8_t m_stamp_buffer[TRIA_Stamp::PACKED_SIZE];
 
@@ -38,4 +40,6 @@ private:
   TRIA_Stamp m_tx_stamp;
   TRIA_RangeRequest m_cached_range_request;
   TRIA_RangeResponse m_cached_range_response;
+
+  BinaryMessageStore m_store;
 };

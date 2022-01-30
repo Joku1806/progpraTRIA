@@ -21,10 +21,6 @@ TRIA_ID id;
 uint8_t recv_buffer[TRIA_GenericPacket::PACKED_SIZE];
 uint8_t send_buffer[TRIA_GenericPacket::PACKED_SIZE];
 
-TRIA_RangeRequest cached_request;
-TRIA_RangeResponse cached_response;
-TRIA_RangeReport cached_report;
-
 void build_id() {
   uint8_t type = 0;
 
@@ -59,10 +55,17 @@ void lora_send_packet(TRIA_GenericPacket &packet) {
 }
 
 void recv_handler(const dwt_cb_data_t *cb_data) {
-  auto got_report = DW_interface.handle_incoming_packet(cb_data->datalength, cached_report);
-  if (got_report) {
-    lora_send_packet(cached_report);
-  }
+#ifdef DEBUG
+  unsigned long bench_start = micros();
+#endif
+
+  DW_interface.store_received_message(cb_data);
+
+#ifdef DEBUG
+  unsigned long bench_stop = micros();
+  Serial.printf("Interrupt Bench = %uus\n",
+                max(bench_start, bench_stop) - min(bench_start, bench_stop));
+#endif
 }
 
 void setup() {
@@ -79,16 +82,43 @@ void setup() {
 #endif
 
   build_id();
-  DW_interface = DW3000_Interface(id, recv_handler);
+  DW_interface = DW3000_Interface(recv_handler);
   VERIFY(rf95.init());
 }
 
 void loop() {
+  while (DW_interface.unprocessed_messages_pending()) {
+#ifdef DEBUG
+    Serial.println("DW received message!");
+#endif
+
+    BinaryMessage m = DW_interface.get_first_unprocessed_message();
+
+    TRIA_GenericPacket *received = nullptr;
+    if (!deserialise_packet(m.data, m.data_length, id, &received)) {
+      continue;
+    }
+    VERIFY(received != nullptr);
+
+    if (received->is_type(range_request)) {
+      auto response = TRIA_RangeResponse(id, received->received_from(), TRIA_Stamp(m.receive_time));
+      DW_interface.send_range_response(response);
+    } else if (received->is_type(range_response)) {
+      TRIA_Stamp message_rx = TRIA_Stamp(m.receive_time);
+      TRIA_Stamp original_tx = DW_interface.get_tx_stamp();
+      TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
+      TRIA_Stamp measured_tx = static_cast<TRIA_RangeResponse *>(received)->get_tx_stamp();
+      // FIXME: vielleicht sollten wir die Ungenauigkeitschecks schon hier machen, anstatt auf
+      // der Data Team Seite
+      message_rx = message_rx - (measured_tx - measured_rx);
+
+      auto report = TRIA_RangeReport(received->received_from(), id, message_rx, original_tx);
+      lora_send_packet(report);
+    }
+  }
+
   if (id.is_coordinator() &&
       (USB_interface.schedule_full() || USB_interface.schedule_likely_finished())) {
-#ifdef DEBUG
-    Serial.println("Requested Measurements are done, sending to data team.");
-#endif
     USB_interface.send_scheduled_reports();
     USB_interface.schedule_reset();
   }
@@ -96,32 +126,14 @@ void loop() {
   if (rf95.available()) {
     uint8_t recv_length = sizeof(recv_buffer);
     if (!rf95.recv(recv_buffer, &recv_length)) {
-#ifdef DEBUG
-      Serial.println("Couldn't receive message using LoRa radio.");
-#endif
-
       return;
     }
 
-    if (!packet_ok(recv_buffer, recv_length, id)) {
-#ifdef DEBUG
-      Serial.println("Received packet is not in a valid format or not intended for us.");
-#endif
-
+    TRIA_GenericPacket *received = nullptr;
+    if (!deserialise_packet(recv_buffer, recv_length, id, &received)) {
       return;
     }
-
-    TRIA_Action action;
-    action.initialise_from_buffer(recv_buffer);
-
-    TRIA_GenericPacket *received;
-    switch (action.value()) {
-      case range_request: received = &cached_request; break;
-      case range_response: received = &cached_response; break;
-      case range_report: received = &cached_report; break;
-      default: VERIFY_NOT_REACHED();
-    }
-    received->initialise_from_buffer(recv_buffer);
+    VERIFY(received != nullptr);
 
 #ifdef DEBUG
     Serial.print("Paket empfangen (LoRa): ");
@@ -130,26 +142,17 @@ void loop() {
 #endif
 
     if (received->is_type(range_request) && received->received_from().is_coordinator()) {
-#ifdef DEBUG
-      Serial.println("Got forwarded measurement request from coordinator.");
-#endif
-
       TRIA_RangeRequest repeated = TRIA_RangeRequest(id, TRIA_ID(tracker));
-      DW_interface.send_packet(repeated);
+      DW_interface.send_range_request(repeated);
     }
 
     if (received->is_type(range_report) && id.is_coordinator() && !USB_interface.schedule_full()) {
-#ifdef DEBUG
-      Serial.println("Scheduling received range report.");
-#endif
+      // FIXME: Irgendwie ohne cast hinkriegen
       USB_interface.schedule_report(*static_cast<TRIA_RangeReport *>(received));
     }
   }
 
   if (id.is_coordinator() && USB_interface.measurement_requested()) {
-#ifdef DEBUG
-    Serial.println("Got measurement request from data team.");
-#endif
     TRIA_RangeRequest request = TRIA_RangeRequest(id, TRIA_ID(trackee));
     lora_send_packet(request);
   }
