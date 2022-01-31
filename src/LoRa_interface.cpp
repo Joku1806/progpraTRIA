@@ -55,17 +55,7 @@ void lora_send_packet(TRIA_GenericPacket &packet) {
 }
 
 void recv_handler(const dwt_cb_data_t *cb_data) {
-#ifdef DEBUG
-  unsigned long bench_start = micros();
-#endif
-
   DW_interface.store_received_message(cb_data);
-
-#ifdef DEBUG
-  unsigned long bench_stop = micros();
-  Serial.printf("Interrupt Bench = %uus\n",
-                max(bench_start, bench_stop) - min(bench_start, bench_stop));
-#endif
 }
 
 void setup() {
@@ -88,10 +78,6 @@ void setup() {
 
 void loop() {
   while (DW_interface.unprocessed_messages_pending()) {
-#ifdef DEBUG
-    Serial.println("DW received message!");
-#endif
-
     BinaryMessage m = DW_interface.get_first_unprocessed_message();
 
     TRIA_GenericPacket *received = nullptr;
@@ -99,6 +85,12 @@ void loop() {
       continue;
     }
     VERIFY(received != nullptr);
+
+#ifdef DEBUG
+    Serial.println("Paket empfangen (DW): ");
+    received->print();
+    Serial.print("\n");
+#endif
 
     if (received->is_type(range_request)) {
       auto response = TRIA_RangeResponse(id, received->received_from(), TRIA_Stamp(m.receive_time));
