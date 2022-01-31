@@ -18,9 +18,12 @@ public:
   // Benchmark von Delayed TX Code ist max. 800us
   // => 800000ns => 100000 delay
   static const uint32_t SEND_DELAY = 100000;
+  // delay, damit RangeResponses nicht alle gleichzeitig beim Trackee ankommen. Berechnet
+  // durch maximale Laufzeit der Interruptroutine (ca. 600us in Einheit von 8ns).
+  static const uint32_t SLOT_DELAY = 125000;
 
   DW3000_Interface() {};
-  DW3000_Interface(void (*recv_handler)(const dwt_cb_data_t *cb_data));
+  DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data));
 
   void save_tx_stamp();
   TRIA_Stamp get_tx_stamp();
@@ -36,10 +39,7 @@ private:
   uint8_t m_packet_buffer[TRIA_GenericPacket::PACKED_SIZE];
   uint8_t m_stamp_buffer[TRIA_Stamp::PACKED_SIZE];
 
-  TRIA_Stamp m_rx_stamp;
   TRIA_Stamp m_tx_stamp;
-  TRIA_RangeRequest m_cached_range_request;
-  TRIA_RangeResponse m_cached_range_response;
-
   BinaryMessageStore m_store;
+  uint8_t m_assigned_slot;
 };

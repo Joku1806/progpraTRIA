@@ -5,7 +5,13 @@ public:
   static const unsigned MAX_ENTRIES = 3;
   static const uint8_t MEASURE_COMMAND = 0x6D; // m
 
-  static const unsigned MAX_DELAY_US = 14; // 4000m / c_air von s => us
+  // 4000m / c_air + maximaler slot delay Unterschied von zwei Trackern
+  // static const unsigned MAX_DELAY_US = 14 + 1000 * 3;
+
+  // RadioHead braucht viel zu lange, um RangeReports zu versenden, als
+  // Notlösung Delay sehr hoch setzen, damit Datenpunkte trotzdem im gleichen
+  // Measurement rübergeschickt werden.
+  static const unsigned MAX_DELAY_US = 65000 * 2;
 
   USB_Interface() : m_last_insert_time_valid(false), m_last_insert_time(0), m_index(0) {};
 

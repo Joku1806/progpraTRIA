@@ -73,7 +73,7 @@ void setup() {
 #endif
 
   build_id();
-  DW_interface = DW3000_Interface(recv_handler);
+  DW_interface = DW3000_Interface(id, recv_handler);
   VERIFY(rf95.init());
 }
 
