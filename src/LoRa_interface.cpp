@@ -56,6 +56,7 @@ void lora_send_packet(TRIA_GenericPacket &packet) {
 
 void recv_handler(const dwt_cb_data_t *cb_data) {
   DW_interface.store_received_message(cb_data);
+  dwt_writefastCMD(CMD_RX);
 }
 
 void setup() {
