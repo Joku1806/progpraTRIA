@@ -59,8 +59,6 @@ void DWIC_configure_interrupts(void (*recv_handler)(const dwt_cb_data_t *cb_data
 
   // FIXME: wird das gebraucht?
   dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RCINIT_BIT_MASK | SYS_STATUS_SPIRDY_BIT_MASK);
-  // sofort Verbindungen annehmen
-  dwt_writefastCMD(CMD_RX);
 }
 
 int writetospiwithcrc(uint16_t headerLength, const uint8_t *headerBuffer, uint16_t bodyLength,

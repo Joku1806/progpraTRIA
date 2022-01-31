@@ -11,6 +11,9 @@ DW3000_Interface::DW3000_Interface(void (*recv_handler)(const dwt_cb_data_t *cb_
   DWIC_reset();
   DWIC_configure_spi(SPI_FASTRATE);
   DWIC_configure_interrupts(recv_handler);
+
+  // sofort Verbindungen annehmen
+  dwt_writefastCMD(CMD_RX);
 }
 
 void DW3000_Interface::store_received_message(const dwt_cb_data_t *cb_data) {
