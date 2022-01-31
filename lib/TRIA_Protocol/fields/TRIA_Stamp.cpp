@@ -7,7 +7,7 @@
 TRIA_Stamp TRIA_Stamp::operator-(TRIA_Stamp other) {
   // FIXME: wegen Ungenauigkeiten in der Messung kann es passieren, dass wir hier abstürzen,
   // in dem Fall sollte wahrscheinlich 0 zurückgegeben werden.
-  VERIFY(m_stamp >= other.m_stamp);
+  // VERIFY(m_stamp >= other.m_stamp);
   return TRIA_Stamp(m_stamp - other.m_stamp);
 }
 
