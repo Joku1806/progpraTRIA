@@ -7,7 +7,7 @@ public:
 
   static const unsigned MAX_DELAY_US = 14; // 4000m / c_air von s => us
 
-  USB_Interface() {};
+  USB_Interface() : m_last_insert_time_valid(false), m_last_insert_time(0), m_index(0) {};
 
   bool measurement_requested();
 
