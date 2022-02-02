@@ -17,6 +17,7 @@ public:
 
   bool measurement_requested();
 
+  bool schedule_is_reset();
   bool schedule_full();
   bool schedule_likely_finished();
   void schedule_report(TRIA_RangeReport &r);

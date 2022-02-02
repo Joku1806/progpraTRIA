@@ -13,6 +13,8 @@ bool USB_Interface::measurement_requested() {
   return command == MEASURE_COMMAND;
 }
 
+bool USB_Interface::schedule_is_reset() { return !m_last_insert_time_valid && m_index == 0; }
+
 bool USB_Interface::schedule_full() { return m_index == MAX_ENTRIES; }
 
 bool USB_Interface::schedule_likely_finished() {
