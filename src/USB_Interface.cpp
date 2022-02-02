@@ -20,7 +20,10 @@ bool USB_Interface::schedule_likely_finished() {
     return false;
   }
 
-  return micros() - MAX_DELAY_US >= m_last_insert_time;
+  unsigned long current_time = micros();
+  return current_time < m_last_insert_time
+             ? (ULONG_MAX - m_last_insert_time + current_time >= MAX_DELAY_US)
+             : (current_time - m_last_insert_time >= MAX_DELAY_US);
 }
 
 void USB_Interface::schedule_report(TRIA_RangeReport &r) {
