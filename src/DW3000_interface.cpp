@@ -22,6 +22,7 @@ DW3000_Interface::DW3000_Interface(TRIA_ID &id,
 }
 
 void DW3000_Interface::store_received_message(const dwt_cb_data_t *cb_data) {
+  // TODO: ist cb_datalength immer min FCS_LEN groß?
   if (cb_data->datalength - FCS_LEN > TRIA_GenericPacket::PACKED_SIZE) {
     return;
   }
