@@ -1,4 +1,5 @@
-import struct, serial, json, time
+import struct, serial, json
+from rich.progress import track
 
 class StampPacketReader:
     # prüft erst, ob der Port übereinstimmt
@@ -9,10 +10,12 @@ class StampPacketReader:
 
     def __init__(self):
         self.informant = serial.Serial(self.SERIAL_PORT, 9600)
+        self.count_stats = [0] * 4
         
     def receive(self):
         self.informant.write(struct.pack("<B", self.SEND_SIGNAL))
         count = int.from_bytes(self.informant.read(4), byteorder = 'little')
+        self.count_stats[count] += 1
         measures = []
         
         for _ in range(count):
@@ -38,13 +41,19 @@ class StampPacketReader:
             ToF_s = timediff * 15.65 / 2000000000000
             measures.append({"id": sender_id, 'tof': ToF_s})
 
+        self.informant.reset_input_buffer()
         wrapped = {"mcus": measures}
         return json.dumps(wrapped, indent = 4)
+
+    def print_count_stats(self):
+      print(f"Number of measurement requests: {sum(self.count_stats)}")
+      for i in range(4):
+        print(f"Received measurements containing {i} datapoints {self.count_stats[i]} times.")
 
 if __name__ == "__main__":
     reader = StampPacketReader()
     
-    while True:
-        measurement = reader.receive()
-        print(measurement)
-        time.sleep(0.5)
+    for i in track(range(10000)):
+      measurement = reader.receive()
+    
+    reader.print_count_stats()
