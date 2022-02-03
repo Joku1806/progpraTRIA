@@ -21,6 +21,7 @@ void ComponentBridge::initialise(
 
   m_id = build_id();
   m_dw_interface = DW3000_Interface(m_id, dw_receive_interrupt_handler);
+  m_rf95.setModemConfig(RH_RF95::ModemConfigChoice::Bw125Cr45Sf128);
   VERIFY(m_rf95.init());
 }
 
@@ -51,6 +52,7 @@ bool ComponentBridge::measurement_requested() {
 }
 
 void ComponentBridge::start_measurement() {
+  m_usb_interface.schedule_reset();
   TRIA_RangeRequest request = TRIA_RangeRequest(m_id, TRIA_ID(trackee));
   send_packet_over_lora(request);
 }
@@ -130,13 +132,8 @@ void ComponentBridge::handle_received_dw_messages() {
   }
 }
 
-bool ComponentBridge::last_measurement_finished() {
-  return m_id.is_coordinator() && m_usb_interface.schedule_is_reset();
-}
-
 bool ComponentBridge::current_measurement_finished() {
-  return m_id.is_coordinator() &&
-         (m_usb_interface.schedule_full() || m_usb_interface.schedule_likely_finished());
+  return m_id.is_coordinator() && m_usb_interface.schedule_full();
 }
 
 void ComponentBridge::send_current_measurement() {

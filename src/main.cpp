@@ -21,7 +21,7 @@ void loop() {
     BENCHMARK(bridge.send_current_measurement());
   }
 
-  if (bridge.measurement_requested() && bridge.last_measurement_finished()) {
+  if (bridge.measurement_requested()) {
     BENCHMARK(bridge.start_measurement());
   }
 }

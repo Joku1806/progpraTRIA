@@ -1,5 +1,6 @@
-import struct, serial, json
+import struct, serial, json, time
 from rich.progress import track
+from statistics import mean, variance
 
 class StampPacketReader:
     # prüft erst, ob der Port übereinstimmt
@@ -7,15 +8,25 @@ class StampPacketReader:
     SEND_SIGNAL = 0x6D # m
     PACKET_SIZE = 19
     MAX_MEASURE_TIMEDIFF = 0x6819f
+    MAX_MEASURE_DURATION = 0.25 # 200ms
 
     def __init__(self):
-        self.informant = serial.Serial(self.SERIAL_PORT, 9600)
-        self.count_stats = [0] * 4
+        self.informant = serial.Serial(self.SERIAL_PORT, 9600, timeout = self.MAX_MEASURE_DURATION)
+        self.request_count = 0
+        self.successful_request_count = 0
+        self.bench_stats = []
         
     def receive(self):
+        self.request_count += 1
+        start_bench = time.time()
+
         self.informant.write(struct.pack("<B", self.SEND_SIGNAL))
-        count = int.from_bytes(self.informant.read(4), byteorder = 'little')
-        self.count_stats[count] += 1
+        count_lb = self.informant.read(4)
+        if len(count_lb) != 4:
+          self.informant.reset_input_buffer()
+          return None
+        
+        count = int.from_bytes(count_lb, byteorder = 'little')
         measures = []
         
         for _ in range(count):
@@ -43,17 +54,21 @@ class StampPacketReader:
 
         self.informant.reset_input_buffer()
         wrapped = {"mcus": measures}
+        
+        stop_bench = time.time()
+        self.bench_stats.append(stop_bench - start_bench)
+        self.successful_request_count += 1
+
         return json.dumps(wrapped, indent = 4)
 
-    def print_count_stats(self):
-      print(f"Number of measurement requests: {sum(self.count_stats)}")
-      for i in range(4):
-        print(f"Received measurements containing {i} datapoints {self.count_stats[i]} times.")
+    def print_stats(self):
+      print(f"Received measurements in {self.successful_request_count / self.request_count * 100}% of cases.")
+      print(f"Average execution time = {mean(self.bench_stats)}s, Variance = {variance(self.bench_stats)}s")
 
 if __name__ == "__main__":
     reader = StampPacketReader()
     
-    for i in track(range(10000)):
-      measurement = reader.receive()
+    for i in track(range(1000)):
+      reader.receive()
     
-    reader.print_count_stats()
+    reader.print_stats()

@@ -23,7 +23,6 @@ public:
   bool did_receive_lora_messages();
   void handle_received_lora_messages();
 
-  bool last_measurement_finished();
   bool current_measurement_finished();
   void send_current_measurement();
 
