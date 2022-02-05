@@ -14,7 +14,7 @@ void ComponentBridge::initialise(
   pinMode(SPI_chipselect, OUTPUT);
   SPI.begin();
 
-#if defined(DEBUG) || defined(COORDINATOR)
+#if defined(DEBUG) || defined(BENCH_ON) || defined(COORDINATOR)
   Serial.begin(9600);
   while (!Serial) {};
 #endif
@@ -142,14 +142,14 @@ void ComponentBridge::send_current_measurement() {
 }
 
 void ComponentBridge::send_packet_over_lora(TRIA_GenericPacket &packet) {
+  packet.pack_into(m_send_buffer);
+  BENCHMARK(VERIFY(m_rf95.send(m_send_buffer, packet.packed_size())););
+
 #ifdef DEBUG
   Serial.print("Paket gesendet (LoRa): ");
   packet.print();
   Serial.print("\n");
 #endif
-
-  packet.pack_into(m_send_buffer);
-  VERIFY(m_rf95.send(m_send_buffer, packet.packed_size()));
 }
 
 void ComponentBridge::receive_dw_message(const dwt_cb_data_t *cb_data) {

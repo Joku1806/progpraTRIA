@@ -1,20 +1,31 @@
 #pragma once
 
-#ifdef DEBUG
+#ifdef BENCH_ON
 
 #include <Arduino.h>
 
+// clang-format off
 #define BENCHMARK(fn)                                                                              \
   do {                                                                                             \
-    Serial.print("--- Beginning Benchmark for " #fn "\n");                                         \
     unsigned long bench_start = micros();                                                          \
-    fn;                                                                                            \
+    fn                                                                                             \
     unsigned long bench_stop = micros();                                                           \
-    Serial.print("--- Ended Benchmark for " #fn ", took ");                                        \
+    Serial.print("--- Benchmark for " #fn " finished, took ");                                     \
     Serial.print(bench_start <= bench_stop ? bench_stop - bench_start                              \
                                            : ULONG_MAX - bench_start + bench_stop);                \
     Serial.print("us.\n");                                                                         \
   } while (0)
+// clang-format on
+
+#else
+
+#define BENCHMARK(fn) fn
+
+#endif
+
+#ifdef DEBUG
+
+#include <Arduino.h>
 
 #define VERIFY(expression)                                                                         \
   do {                                                                                             \
@@ -28,8 +39,6 @@
   } while (0)
 
 #else
-
-#define BENCHMARK(fn) fn;
 
 #define VERIFY(expression)                                                                         \
   do {                                                                                             \
