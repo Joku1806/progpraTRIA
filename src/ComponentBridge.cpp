@@ -21,7 +21,7 @@ void ComponentBridge::initialise(
 
   m_id = build_id();
   m_dw_interface = DW3000_Interface(m_id, dw_receive_interrupt_handler);
-  m_rf95.setModemConfig(RH_RF95::ModemConfigChoice::Bw125Cr45Sf128);
+  VERIFY(m_rf95.setModemConfig(RH_RF95::ModemConfigChoice::Bw500Cr45Sf128));
   VERIFY(m_rf95.init());
 }
 
@@ -142,8 +142,9 @@ void ComponentBridge::send_current_measurement() {
 }
 
 void ComponentBridge::send_packet_over_lora(TRIA_GenericPacket &packet) {
-  packet.pack_into(m_send_buffer);
+  BENCHMARK(packet.pack_into(m_send_buffer););
   BENCHMARK(VERIFY(m_rf95.send(m_send_buffer, packet.packed_size())););
+  BENCHMARK(m_rf95.waitPacketSent(););
 
 #ifdef DEBUG
   Serial.print("Paket gesendet (LoRa): ");
