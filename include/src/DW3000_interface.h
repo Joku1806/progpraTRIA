@@ -19,7 +19,7 @@ public:
   // => 800000ns => 100000 delay
   static const uint32_t SEND_DELAY = 100000;
   // delay, damit RangeResponses nicht alle gleichzeitig beim Trackee ankommen. Berechnet
-  // durch maximale Laufzeit der Interruptroutine (ca. 600us in Einheit von 8ns).
+  // durch maximale Laufzeit der Interruptroutine (ca. 1ms in Einheit von 8ns).
   static const uint32_t SLOT_DELAY = 125000;
 
   DW3000_Interface() {};
