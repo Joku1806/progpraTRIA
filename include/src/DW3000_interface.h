@@ -15,11 +15,14 @@ public:
   // so groß, dass das VERIFY in send_packet()
   // nicht mehr getriggert wird.
   // in Einheit von 8ns, siehe API Guide S. 44
-  // Benchmark von Delayed TX Code ist max. 800us
-  // => 800000ns => 100000 delay
+  // Benchmark von Delayed TX Code ist max. 300us
+  // => 300000ns => 37500 delay
   static const uint32_t SEND_DELAY = 100000;
-  // delay, damit RangeResponses nicht alle gleichzeitig beim Trackee ankommen. Berechnet
-  // durch maximale Laufzeit der Interruptroutine (ca. 1ms in Einheit von 8ns).
+  // delay, damit RangeResponses nicht alle gleichzeitig beim Trackee ankommen.
+  // Benchmark von RX Interrupt Routine ist max. 200us
+  // FIXME: beide Werte, die funktionieren, weichen stark von den Benchmark-Werten ab,
+  // schauen ob die Einheit mit 8ns so stimmt, das könnte auch die komischen Distanzabweichungen
+  // erklären!
   static const uint32_t SLOT_DELAY = 125000;
 
   DW3000_Interface() {};
