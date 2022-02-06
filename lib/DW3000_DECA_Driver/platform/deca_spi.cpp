@@ -22,6 +22,8 @@ void DWIC_reset() {
 }
 
 // FIXME: hat eigentlich nichts mit SPI zu tun
+// Außerdem: rausfinden wie man 850kbps Datenrate für höhere Range
+// zum Funktionieren bekommt
 void DWIC_configure_spi(size_t spi_rate) {
   dwt_config_t config = {
       .chan = 5,
@@ -33,9 +35,9 @@ void DWIC_configure_spi(size_t spi_rate) {
       .dataRate = DWT_BR_6M8,
       .phrMode = DWT_PHRMODE_STD,
       .phrRate = DWT_PHRRATE_STD,
-      .sfdTO = 129 + 8 - 8, /* SFD timeout (preamble length + 1 + SFD length - PAC size) */
+      .sfdTO = 128 + 1 + 8 - 8, /* SFD timeout (preamble length + 1 + SFD length - PAC size) */
       .stsMode = DWT_STS_MODE_OFF,
-      .stsLength = DWT_STS_LEN_32,
+      .stsLength = DWT_STS_LEN_64,
       .pdoaMode = DWT_PDOA_M0,
   };
 
