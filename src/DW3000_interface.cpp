@@ -71,18 +71,19 @@ void DW3000_Interface::send_range_request(TRIA_RangeRequest &request) {
 void DW3000_Interface::send_range_response(TRIA_RangeResponse &response) {
   dwt_forcetrxoff();
 
-  uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
-  uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
-  uint64_t send_time_hi32 = sys_time_hi32 + SEND_DELAY + SLOT_DELAY * m_assigned_slot;
+  BENCHMARK(
+      uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
+      uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
+      uint64_t send_time_hi32 = sys_time_hi32 + SEND_DELAY + SLOT_DELAY * m_assigned_slot;
 
-  auto tx = TRIA_Stamp((send_time_hi32 << 8) + antenna_delay);
-  response.set_tx_stamp(tx);
-  response.pack_into(m_packet_buffer);
+      auto tx = TRIA_Stamp((send_time_hi32 << 8) + antenna_delay); response.set_tx_stamp(tx);
+      response.pack_into(m_packet_buffer);
 
-  VERIFY(dwt_writetxdata(TRIA_RangeResponse::PACKED_SIZE, m_packet_buffer, 0) == DWT_SUCCESS);
-  dwt_writetxfctrl(TRIA_RangeResponse::PACKED_SIZE + FCS_LEN, 0, 0);
-  dwt_setdelayedtrxtime(send_time_hi32);
-  VERIFY(dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
+      VERIFY(dwt_writetxdata(TRIA_RangeResponse::PACKED_SIZE, m_packet_buffer, 0) == DWT_SUCCESS);
+      dwt_writetxfctrl(TRIA_RangeResponse::PACKED_SIZE + FCS_LEN, 0, 0);
+      dwt_setdelayedtrxtime(send_time_hi32);
+
+      VERIFY(dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS););
 
   while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);

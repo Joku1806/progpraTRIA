@@ -3,7 +3,7 @@
 ComponentBridge bridge;
 
 void dw_receive_interrupt_handler(const dwt_cb_data_t *cb_data) {
-  bridge.receive_dw_message(cb_data);
+  BENCHMARK(bridge.receive_dw_message(cb_data););
 }
 
 void setup() { bridge.initialise(dw_receive_interrupt_handler); }

@@ -142,9 +142,8 @@ void ComponentBridge::send_current_measurement() {
 }
 
 void ComponentBridge::send_packet_over_lora(TRIA_GenericPacket &packet) {
-  BENCHMARK(packet.pack_into(m_send_buffer););
-  BENCHMARK(VERIFY(m_rf95.send(m_send_buffer, packet.packed_size())););
-  BENCHMARK(m_rf95.waitPacketSent(););
+  packet.pack_into(m_send_buffer);
+  VERIFY(m_rf95.send(m_send_buffer, packet.packed_size()));
 
 #ifdef DEBUG
   Serial.print("Paket gesendet (LoRa): ");
