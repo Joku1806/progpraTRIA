@@ -21,7 +21,7 @@ void ComponentBridge::initialise(
 
   m_id = build_id();
   m_dw_interface = DW3000_Interface(m_id, dw_receive_interrupt_handler);
-  VERIFY(m_rf95.setModemConfig(RH_RF95::ModemConfigChoice::Bw500Cr45Sf128));
+  VERIFY(m_rf95.setModemConfig(RH_RF95::ModemConfigChoice::Bw125Cr45Sf128));
   VERIFY(m_rf95.init());
 }
 
