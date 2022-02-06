@@ -5,12 +5,12 @@
 #include <Arduino.h>
 
 // clang-format off
-#define BENCHMARK(fn)                                                                              \
+#define BENCHMARK(code)                                                                            \
   do {                                                                                             \
     unsigned long bench_start = micros();                                                          \
-    fn                                                                                             \
+    code                                                                                           \
     unsigned long bench_stop = micros();                                                           \
-    Serial.print("--- Benchmark for " #fn " finished, took ");                                     \
+    Serial.print("--- Benchmark for " #code " finished, took ");                                   \
     Serial.print(bench_start <= bench_stop ? bench_stop - bench_start                              \
                                            : ULONG_MAX - bench_start + bench_stop);                \
     Serial.print("us.\n");                                                                         \
@@ -19,7 +19,7 @@
 
 #else
 
-#define BENCHMARK(fn) fn
+#define BENCHMARK(code) code
 
 #endif
 
