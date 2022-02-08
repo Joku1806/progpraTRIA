@@ -83,9 +83,10 @@ void DW3000_Interface::send_range_response(TRIA_RangeResponse &response) {
       dwt_writetxfctrl(TRIA_RangeResponse::PACKED_SIZE + FCS_LEN, 0, 0);
       dwt_setdelayedtrxtime(send_time_hi32);
 
-      VERIFY(dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS););
+      VERIFY(dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
 
-  while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};
+      while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};);
+
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
 #ifdef DEBUG

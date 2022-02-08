@@ -12,18 +12,14 @@ class DW3000_Interface {
 public:
   static const size_t SPI_SLOWRATE = 4500000;
   static const size_t SPI_FASTRATE = 10000000;
-  // so groß, dass das VERIFY in send_packet()
-  // nicht mehr getriggert wird.
   // in Einheit von 8ns, siehe API Guide S. 44
-  // Benchmark von Delayed TX Code ist max. 300us
-  // => 300000ns => 37500 delay
-  static const uint32_t SEND_DELAY = 100000;
+  // Benchmark von Delayed TX Code ist max. 2500us (2400us + slack)
+  // => 2500000ns => 312500 delay
+  static const uint32_t SEND_DELAY = 312500;
   // delay, damit RangeResponses nicht alle gleichzeitig beim Trackee ankommen.
   // Benchmark von RX Interrupt Routine ist max. 200us
-  // FIXME: beide Werte, die funktionieren, weichen stark von den Benchmark-Werten ab,
-  // schauen ob die Einheit mit 8ns so stimmt, das könnte auch die komischen Distanzabweichungen
-  // erklären!
-  static const uint32_t SLOT_DELAY = 125000;
+  // => 200000ns => 25000 delay
+  static const uint32_t SLOT_DELAY = 25000;
 
   DW3000_Interface() {};
   DW3000_Interface(TRIA_ID &id, void (*recv_handler)(const dwt_cb_data_t *cb_data));
