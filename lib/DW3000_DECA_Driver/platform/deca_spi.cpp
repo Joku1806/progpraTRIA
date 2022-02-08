@@ -27,15 +27,15 @@ void DWIC_reset() {
 void DWIC_configure_spi(size_t spi_rate) {
   dwt_config_t config = {
       .chan = 5,
-      .txPreambLength = DWT_PLEN_128,
-      .rxPAC = DWT_PAC8,
+      .txPreambLength = DWT_PLEN_256,
+      .rxPAC = DWT_PAC16,
       .txCode = 9,
       .rxCode = 9,
       .sfdType = DWT_SFD_DW_8,
-      .dataRate = DWT_BR_6M8,
+      .dataRate = DWT_BR_850K,
       .phrMode = DWT_PHRMODE_STD,
       .phrRate = DWT_PHRRATE_STD,
-      .sfdTO = 128 + 1 + 8 - 8, /* SFD timeout (preamble length + 1 + SFD length - PAC size) */
+      .sfdTO = 256 + 1 + 8 - 16, /* SFD timeout (preamble length + 1 + SFD length - PAC size) */
       .stsMode = DWT_STS_MODE_OFF,
       .stsLength = DWT_STS_LEN_64,
       .pdoaMode = DWT_PDOA_M0,
@@ -52,9 +52,15 @@ void DWIC_configure_spi(size_t spi_rate) {
   DWIC_set_spi_rate(spi_rate);
 }
 
+void rx_timeout_handler(const dwt_cb_data_t *cb_data) { dwt_writefastCMD(CMD_RX); }
+
+void rx_error_handler(const dwt_cb_data_t *cb_data) { dwt_writefastCMD(CMD_RX); }
+
 void DWIC_configure_interrupts(void (*recv_handler)(const dwt_cb_data_t *cb_data)) {
-  dwt_setcallbacks(NULL, recv_handler, NULL, NULL, NULL, NULL);
-  dwt_setinterrupt(SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
+  dwt_setcallbacks(NULL, recv_handler, rx_timeout_handler, rx_error_handler, NULL, NULL);
+  dwt_setinterrupt(DWT_INT_RPHE | DWT_INT_RFCG | DWT_INT_RFCE | DWT_INT_RFSL | DWT_INT_RFTO |
+                       DWT_INT_SFDT | DWT_INT_RXPTO,
+                   0, DWT_ENABLE_INT);
   pinMode(SPI_interrupt, INPUT_PULLUP);
   digitalWrite(SPI_interrupt, LOW);
   attachInterrupt(digitalPinToInterrupt(SPI_interrupt), dwt_isr, RISING);
