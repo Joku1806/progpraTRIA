@@ -34,7 +34,13 @@
       Serial.print(" in " __FILE__ ":");                                                           \
       Serial.print(__LINE__);                                                                      \
       Serial.flush();                                                                              \
-      exit(EXIT_FAILURE);                                                                          \
+                                                                                                   \
+      for (;;) {                                                                                   \
+        digitalWrite(LED_BUILTIN, LOW);                                                            \
+        delay(500);                                                                                \
+        digitalWrite(LED_BUILTIN, HIGH);                                                           \
+        delay(500);                                                                                \
+      }                                                                                            \
     }                                                                                              \
   } while (0)
 
@@ -43,7 +49,12 @@
 #define VERIFY(expression)                                                                         \
   do {                                                                                             \
     if (!(expression)) {                                                                           \
-      exit(EXIT_FAILURE);                                                                          \
+      for (;;) {                                                                                   \
+        digitalWrite(LED_BUILTIN, LOW);                                                            \
+        delay(500);                                                                                \
+        digitalWrite(LED_BUILTIN, HIGH);                                                           \
+        delay(500);                                                                                \
+      }                                                                                            \
     }                                                                                              \
   } while (0)
 
