@@ -5,7 +5,7 @@ public:
   static const unsigned MAX_ENTRIES = 3;
   static const uint8_t MEASURE_COMMAND = 0x6D; // m
 
-  USB_Interface() : m_index(0) {};
+  USB_Interface() {};
 
   bool measurement_requested();
 
@@ -15,6 +15,6 @@ public:
   void schedule_reset();
 
 private:
-  volatile unsigned m_index;
+  unsigned m_index {0};
   uint8_t m_data[MAX_ENTRIES * TRIA_RangeReport::PACKED_SIZE];
 };
