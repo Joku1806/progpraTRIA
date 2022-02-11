@@ -1,8 +1,8 @@
 #pragma once
 
-#ifdef BENCH_ON
-
 #include <Arduino.h>
+
+#ifdef BENCH_ON
 
 // clang-format off
 #define BENCHMARK(code)                                                                            \
@@ -24,8 +24,6 @@
 #endif
 
 #ifdef DEBUG
-
-#include <Arduino.h>
 
 #define VERIFY(expression)                                                                         \
   do {                                                                                             \
