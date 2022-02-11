@@ -1,5 +1,4 @@
-#include <lib/assertions.h>
-#include <src/DW3000_interface.h>
+#include <Arduino.h>
 #include <src/USB_interface.h>
 
 bool USB_Interface::measurement_requested() {
@@ -13,19 +12,11 @@ bool USB_Interface::measurement_requested() {
   return command == MEASURE_COMMAND;
 }
 
-bool USB_Interface::schedule_full() { return m_index == MAX_ENTRIES; }
+void USB_Interface::send_measurement(TRIA_MeasureReport &report) {
+  unsigned fragment_count = report.entries();
+  report.pack_into(m_data);
 
-void USB_Interface::schedule_report(TRIA_RangeReport &r) {
-  VERIFY(m_index < MAX_ENTRIES);
-
-  r.pack_into(m_data + m_index * TRIA_RangeReport::PACKED_SIZE);
-  m_index++;
-}
-
-void USB_Interface::schedule_reset() { m_index = 0; }
-
-void USB_Interface::send_scheduled_reports() {
-  Serial.write((uint8_t *)(&m_index), sizeof(m_index));
-  Serial.write(m_data, m_index * TRIA_RangeReport::PACKED_SIZE);
+  Serial.write((uint8_t *)(&fragment_count), sizeof(fragment_count));
+  Serial.write(m_data + 3, report.packed_size() - 3);
   Serial.flush();
 }

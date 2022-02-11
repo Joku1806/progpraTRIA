@@ -1,8 +1,10 @@
 
 #include <TRIA_helper.h>
-#include <packets/TRIA_RangeReport.h>
+#include <lib/assertions.h>
+#include <packets/TRIA_MeasureReport.h>
 #include <packets/TRIA_RangeRequest.h>
 #include <packets/TRIA_RangeResponse.h>
+#include <platform/pin_mappings.h>
 #include <src/ComponentBridge.h>
 
 void ComponentBridge::initialise(
@@ -21,6 +23,7 @@ void ComponentBridge::initialise(
 
   m_id = build_id();
   m_dw_interface = DW3000_Interface(m_id, dw_receive_interrupt_handler);
+  m_report = TRIA_MeasureReport(m_id, TRIA_ID(coordinator));
 
   VERIFY(m_rf95.init());
   // muss NACH m_rf95.init() gemacht werden, weil dort
@@ -50,20 +53,7 @@ TRIA_ID ComponentBridge::build_id() {
 #endif
 }
 
-bool ComponentBridge::measurement_requested() {
-  return m_id.is_coordinator() && m_usb_interface.measurement_requested();
-}
-
-void ComponentBridge::start_measurement() {
-  m_usb_interface.schedule_reset();
-  TRIA_RangeRequest request = TRIA_RangeRequest(m_id, TRIA_ID(trackee));
-  send_packet_over_lora(request);
-}
-
-// FIXME: besserer Name
-bool ComponentBridge::did_receive_lora_messages() { return m_rf95.available(); }
-
-void ComponentBridge::handle_received_lora_messages() {
+void ComponentBridge::process_new_lora_messages() {
   while (m_rf95.available()) {
     uint8_t recv_length = sizeof(m_recv_buffer);
     if (!m_rf95.recv(m_recv_buffer, &recv_length)) {
@@ -83,24 +73,22 @@ void ComponentBridge::handle_received_lora_messages() {
 #endif
 
     if (received->is_type(range_request) && received->received_from().is_coordinator()) {
+      m_report.reset();
       TRIA_RangeRequest repeated = TRIA_RangeRequest(m_id, TRIA_ID(tracker));
       m_dw_interface.send_range_request(repeated);
     }
 
-    if (received->is_type(range_report) && m_id.is_coordinator() &&
-        !m_usb_interface.schedule_full()) {
-      // FIXME: Irgendwie ohne cast hinkriegen
-      m_usb_interface.schedule_report(*static_cast<TRIA_RangeReport *>(received));
+    if (received->is_type(measure_report) && m_id.is_coordinator()) {
+      m_usb_interface.send_measurement(*static_cast<TRIA_MeasureReport *>(received));
     }
   }
 }
 
-// FIXME: besserer Name
-bool ComponentBridge::did_receive_dw_messages() {
-  return m_dw_interface.unprocessed_messages_pending();
+uint64_t overflow_safe_timediff(uint64_t future, uint64_t past) {
+  return future >= past ? future - past : 0xffffffffff - past + future;
 }
 
-void ComponentBridge::handle_received_dw_messages() {
+void ComponentBridge::process_new_dw_messages() {
   while (m_dw_interface.unprocessed_messages_pending()) {
     BinaryMessage message = m_dw_interface.get_first_unprocessed_message();
 
@@ -111,7 +99,7 @@ void ComponentBridge::handle_received_dw_messages() {
     VERIFY(received != nullptr);
 
 #ifdef DEBUG
-    Serial.println("Paket empfangen (DW): ");
+    Serial.print("Paket empfangen (DW): ");
     received->print();
     Serial.print("\n");
 #endif
@@ -121,27 +109,23 @@ void ComponentBridge::handle_received_dw_messages() {
           TRIA_RangeResponse(m_id, received->received_from(), TRIA_Stamp(message.receive_time));
       m_dw_interface.send_range_response(response);
     } else if (received->is_type(range_response)) {
-      TRIA_Stamp message_rx = TRIA_Stamp(message.receive_time);
-      TRIA_Stamp original_tx = m_dw_interface.get_tx_stamp();
       TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
       TRIA_Stamp measured_tx = static_cast<TRIA_RangeResponse *>(received)->get_tx_stamp();
-      // FIXME: vielleicht sollten wir die Ungenauigkeitschecks schon hier machen, anstatt auf
-      // der Data Team Seite
-      message_rx = message_rx - (measured_tx - measured_rx);
 
-      auto report = TRIA_RangeReport(received->received_from(), m_id, message_rx, original_tx);
-      send_packet_over_lora(report);
+      uint64_t tof =
+          overflow_safe_timediff(message.receive_time, m_dw_interface.get_tx_stamp().value());
+      uint64_t compute_time = overflow_safe_timediff(measured_tx.value(), measured_rx.value());
+      uint64_t adjusted_tof = tof >= compute_time ? (tof - compute_time) / 2 : 0;
+
+      auto measure = TRIA_Measure(received->received_from(), TRIA_Stamp(adjusted_tof));
+      m_report.add_measurement(measure);
+
+      if (m_report.finished()) {
+        send_packet_over_lora(m_report);
+        m_report.reset();
+      }
     }
   }
-}
-
-bool ComponentBridge::current_measurement_finished() {
-  return m_id.is_coordinator() && m_usb_interface.schedule_full();
-}
-
-void ComponentBridge::send_current_measurement() {
-  m_usb_interface.send_scheduled_reports();
-  m_usb_interface.schedule_reset();
 }
 
 void ComponentBridge::send_packet_over_lora(TRIA_GenericPacket &packet) {
@@ -158,4 +142,14 @@ void ComponentBridge::send_packet_over_lora(TRIA_GenericPacket &packet) {
 void ComponentBridge::receive_dw_message(const dwt_cb_data_t *cb_data) {
   m_dw_interface.store_received_message(cb_data);
   dwt_writefastCMD(CMD_RX);
+}
+
+void ComponentBridge::execute() {
+  process_new_dw_messages();
+  process_new_lora_messages();
+
+  if (m_id.is_coordinator() && m_usb_interface.measurement_requested()) {
+    TRIA_RangeRequest request = TRIA_RangeRequest(m_id, TRIA_ID(trackee));
+    send_packet_over_lora(request);
+  }
 }

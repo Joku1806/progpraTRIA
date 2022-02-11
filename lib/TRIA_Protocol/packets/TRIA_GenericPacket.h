@@ -18,9 +18,12 @@ enum field_positions {
 class TRIA_GenericPacket : public TRIA_Field {
 public:
   // gehe von größtem Paket aus
-  static const size_t PACKED_SIZE =
-      TRIA_Action::PACKED_SIZE + 2 * TRIA_ID::PACKED_SIZE + 2 * TRIA_Stamp::PACKED_SIZE;
-  static const size_t FIELD_COUNT = 5;
+  // FIXME: muss immer aufpassen, dass die maximalen Messungen nicht erhöht werden, ist ein Problem,
+  // sollte wahrscheinlich eine globale config oder so geben
+  // vielleicht sollte GenericPacket auch einfach diese Variablen nicht haben, weil die Bedeutung
+  // hier ander ist als in den spezialisierten Klassen.
+  static const size_t PACKED_SIZE = 30;
+  static const size_t FIELD_COUNT = 6;
 
   bool is_type(action a);
   bool is_addressed_to(TRIA_ID &id);
@@ -31,8 +34,6 @@ public:
   size_t packed_size() override;
   void initialise_from_buffer(uint8_t *buffer) override;
   void print() override;
-
-  void print_addresses();
 
 protected:
   TRIA_Field *m_fields[FIELD_COUNT];

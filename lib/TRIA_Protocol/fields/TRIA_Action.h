@@ -5,7 +5,7 @@
 enum action {
   range_request = 0,
   range_response = 1,
-  range_report = 2,
+  measure_report = 2,
 };
 
 class TRIA_Action : public TRIA_Field {

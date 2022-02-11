@@ -16,6 +16,6 @@ void TRIA_Action::print() {
   switch (m_action) {
     case range_request: Serial.print("Range Request"); break;
     case range_response: Serial.print("Range Response"); break;
-    case range_report: Serial.print("Range Report"); break;
+    case measure_report: Serial.print("Measure Report"); break;
   }
 }

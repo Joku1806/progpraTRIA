@@ -55,6 +55,7 @@ private:
   TRIA_Stamp m_tx_stamp;
 
   void overwrite_fields() override {
+    // FIXME: die *_position sollten für jedes Paket einzeln definiert werden.
     m_fields[action_position] = (TRIA_Field *)&m_action;
     m_fields[sender_id_position] = (TRIA_Field *)&m_sender_id;
     m_fields[receiver_id_position] = (TRIA_Field *)&m_receiver_id;

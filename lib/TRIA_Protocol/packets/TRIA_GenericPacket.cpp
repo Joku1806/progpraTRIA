@@ -18,7 +18,7 @@ size_t TRIA_GenericPacket::pack_into(uint8_t *bytes) {
   }
 
   VERIFY(offset == packed_size());
-  return PACKED_SIZE;
+  return packed_size();
 }
 
 size_t TRIA_GenericPacket::packed_size() {
@@ -45,13 +45,4 @@ void TRIA_GenericPacket::print() {
     m_fields[i]->print();
     Serial.print(" | ");
   }
-}
-
-void TRIA_GenericPacket::print_addresses() {
-  Serial.printf("Packet@%p: ", this);
-  Serial.printf("(%u Felder) | ", field_count());
-  for (size_t i = 0; i < field_count(); i++) {
-    Serial.printf("%p | ", m_fields[i]);
-  }
-  Serial.print("\n");
 }
