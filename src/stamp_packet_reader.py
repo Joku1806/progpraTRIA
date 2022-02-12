@@ -14,7 +14,7 @@ class StampPacketReader:
         self.request_count = 0
         self.successful_request_count = 0
         self.bench_stats = []
-        self.dist_stats = []
+        self.dist_stats = {}
         
     def receive(self):
         self.request_count += 1
@@ -36,7 +36,7 @@ class StampPacketReader:
             # Berechnete Zeitdifferenz ist in nativer Clock-Zeit, deswegen
             # erst in Picosekunden und dann in Sekunden umrechnen.
             tof_s = tof_native * 15.65 / 1000000000000
-            self.dist_stats.append(tof_s * 299709000.0)
+            self.dist_stats.setdefault(receiver_id & 0b00011111, []).append(tof_s * 299709000.0)
             measures.append({"id": receiver_id & 0b00011111, 'tof': tof_s})
 
         self.informant.reset_input_buffer()
@@ -51,7 +51,9 @@ class StampPacketReader:
     def print_stats(self):
       print(f"Received measurements in {self.successful_request_count / self.request_count * 100}% of cases.")
       print(f"Average execution time = {mean(self.bench_stats)}s, Variance = {variance(self.bench_stats)}s")
-      print(f"Average distance = {mean(self.dist_stats)}m, Variance = {variance(self.dist_stats)}m")
+      
+      for key in self.dist_stats.keys():
+        print(f"Average distance to UNIT {key} = {mean(self.dist_stats[key])}m, Variance = {variance(self.dist_stats[key])}m")
 
 if __name__ == "__main__":
     reader = StampPacketReader()
