@@ -88,7 +88,7 @@ private:
     TRIA_Measure measure;
     // FIXME: nur zum Testen, es sollte ein Feld im Paket geben, wo die Anzahl an Messungen
     // drinsteht, sollte außerdem wahrscheinlich zur besseren Unterteilung in eine cpp Datei
-    for (size_t i = 0; i < 3; i++) {
+    for (size_t i = 0; i < MAX_MEASURES; i++) {
       measure.initialise_from_buffer(buffer);
       buffer += measure.packed_size();
       add_measurement(measure);
