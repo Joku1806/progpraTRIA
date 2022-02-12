@@ -22,8 +22,6 @@ void DWIC_reset() {
 }
 
 // FIXME: hat eigentlich nichts mit SPI zu tun
-// Außerdem: rausfinden wie man 850kbps Datenrate für höhere Range
-// zum Funktionieren bekommt
 void DWIC_configure_spi(size_t spi_rate) {
   dwt_config_t config = {
       .chan = 5,
@@ -49,6 +47,9 @@ void DWIC_configure_spi(size_t spi_rate) {
       .PGcount = dwt_calcpgcount(0x34, 5),
   };
   dwt_configuretxrf(&tx_config);
+
+  // magische Konstante, durch systematisches Ausprobieren gefunden
+  dwt_settxantennadelay(16421);
   DWIC_set_spi_rate(spi_rate);
 }
 
