@@ -13,6 +13,12 @@ bool USB_Interface::measurement_requested() {
 }
 
 void USB_Interface::send_measurement(TRIA_MeasureReport &report) {
+#ifdef DEBUG
+  Serial.println("Sending report to data team.");
+  report.print();
+  Serial.print("\n");
+#endif
+
   unsigned fragment_count = report.entries();
   report.pack_into(m_data);
 
