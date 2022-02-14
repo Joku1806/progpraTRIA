@@ -99,6 +99,8 @@ void ComponentBridge::process_new_dw_messages() {
     VERIFY(received != nullptr);
 
 #ifdef DEBUG
+    // FIXME: aus irgendeinem Grund kommt mit -D DEBUG die Range Response des Coordinator nicht beim
+    // Trackee an. pls investigate
     Serial.print("Paket empfangen (DW): ");
     received->print();
     Serial.print("\n");
