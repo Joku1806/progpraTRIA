@@ -48,8 +48,6 @@ void DWIC_configure_spi(size_t spi_rate) {
   };
   dwt_configuretxrf(&tx_config);
 
-  // magische Konstante, durch systematisches Ausprobieren gefunden
-  dwt_settxantennadelay(16421);
   DWIC_set_spi_rate(spi_rate);
 }
 

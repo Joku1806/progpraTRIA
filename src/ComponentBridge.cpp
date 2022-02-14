@@ -114,8 +114,12 @@ void ComponentBridge::process_new_dw_messages() {
       TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
       TRIA_Stamp measured_tx = static_cast<TRIA_RangeResponse *>(received)->get_tx_stamp();
 
+      // äquivalent zum addieren von 34cm zur resultierenden Distanz
+      // berechnet durch 0.34m * (1000000000000 / 15.65ps) / c_air
+      static const uint8_t tof_pad = 73;
       uint64_t tof =
-          overflow_safe_timediff(message.receive_time, m_dw_interface.get_tx_stamp().value());
+          overflow_safe_timediff(message.receive_time, m_dw_interface.get_tx_stamp().value()) +
+          tof_pad;
       uint64_t compute_time = overflow_safe_timediff(measured_tx.value(), measured_rx.value());
       uint64_t adjusted_tof = tof >= compute_time ? (tof - compute_time) / 2 : 0;
 
