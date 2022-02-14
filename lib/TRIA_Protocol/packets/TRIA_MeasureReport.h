@@ -85,6 +85,7 @@ private:
       buffer += m_fields[i]->packed_size();
     }
 
+    reset();
     TRIA_Measure measure;
     // FIXME: nur zum Testen, es sollte ein Feld im Paket geben, wo die Anzahl an Messungen
     // drinsteht, sollte außerdem wahrscheinlich zur besseren Unterteilung in eine cpp Datei
