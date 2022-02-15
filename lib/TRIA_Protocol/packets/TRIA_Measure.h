@@ -31,6 +31,9 @@ private:
   TRIA_ID m_tag;
   TRIA_Stamp m_timediff;
 
+  const char *m_field_labels[FIELD_COUNT] = {"Target", "ToF"};
+  const char **field_labels() override { return m_field_labels; };
+
   void overwrite_fields() override {
     m_fields[0] = (TRIA_Field *)&m_tag;
     m_fields[1] = (TRIA_Field *)&m_timediff;

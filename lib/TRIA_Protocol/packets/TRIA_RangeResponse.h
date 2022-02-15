@@ -54,6 +54,9 @@ private:
   TRIA_Stamp m_rx_stamp;
   TRIA_Stamp m_tx_stamp;
 
+  const char *m_field_labels[FIELD_COUNT] = {"Typ", "Von", "An", "RX", "TX"};
+  const char **field_labels() override { return m_field_labels; };
+
   void overwrite_fields() override {
     // FIXME: die *_position sollten für jedes Paket einzeln definiert werden.
     m_fields[action_position] = (TRIA_Field *)&m_action;

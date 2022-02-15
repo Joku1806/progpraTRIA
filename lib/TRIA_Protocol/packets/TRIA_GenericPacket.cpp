@@ -38,10 +38,11 @@ void TRIA_GenericPacket::initialise_from_buffer(uint8_t *buffer) {
 }
 
 void TRIA_GenericPacket::print() {
-  const char *field_labels[FIELD_COUNT] = {"Typ", "Von", "An", "RX", "TX"};
-  Serial.printf("(%u Felder) | ", field_count());
+  const char **labels = field_labels();
+
+  Serial.printf("| ", field_count());
   for (size_t i = 0; i < field_count(); i++) {
-    Serial.printf("%s: ", field_labels[i]);
+    Serial.printf("%s: ", labels[i]);
     m_fields[i]->print();
     Serial.print(" | ");
   }

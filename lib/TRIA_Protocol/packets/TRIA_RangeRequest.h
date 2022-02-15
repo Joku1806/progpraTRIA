@@ -38,6 +38,9 @@ private:
   TRIA_ID m_sender_id;
   TRIA_ID m_receiver_id;
 
+  const char *m_field_labels[FIELD_COUNT] = {"Typ", "Von", "An"};
+  const char **field_labels() override { return m_field_labels; };
+
   void overwrite_fields() override {
     m_fields[action_position] = (TRIA_Field *)&m_action;
     m_fields[sender_id_position] = (TRIA_Field *)&m_sender_id;

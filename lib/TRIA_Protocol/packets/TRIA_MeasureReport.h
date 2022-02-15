@@ -68,6 +68,9 @@ private:
   TRIA_ID m_receiver_id;
   Ringbuffer<TRIA_Measure, MAX_MEASURES> m_measures;
 
+  const char *m_field_labels[FIELD_COUNT] = {"Typ", "Von", "An", "M1", "M2", "M3"};
+  const char **field_labels() override { return m_field_labels; };
+
   // FIXME: initialise_from_buffer() muss auch überschrieben werden
   void overwrite_fields() override {
     m_fields[action_position] = (TRIA_Field *)&m_action;

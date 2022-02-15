@@ -37,6 +37,11 @@ public:
 
 protected:
   TRIA_Field *m_fields[FIELD_COUNT];
+
+  const char *m_field_labels[FIELD_COUNT] = {"Unknown", "Unknown", "Unknown",
+                                             "Unknown", "Unknown", "Unknown"};
+  virtual const char **field_labels() { return m_field_labels; };
+
   virtual void overwrite_fields() = 0;
   virtual size_t field_count() = 0;
 };
