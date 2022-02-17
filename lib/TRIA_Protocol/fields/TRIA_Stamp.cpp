@@ -5,10 +5,8 @@
 #include <lib/assertions.h>
 
 TRIA_Stamp TRIA_Stamp::operator-(TRIA_Stamp other) {
-  // FIXME: wegen Ungenauigkeiten in der Messung kann es passieren, dass wir hier abstürzen,
-  // in dem Fall sollte wahrscheinlich 0 zurückgegeben werden.
-  // VERIFY(m_stamp >= other.m_stamp);
-  return TRIA_Stamp(m_stamp - other.m_stamp);
+  return m_stamp >= other.m_stamp ? TRIA_Stamp(m_stamp - other.m_stamp)
+                                  : TRIA_Stamp(0xffffffffff - other.m_stamp + m_stamp);
 }
 
 size_t TRIA_Stamp::pack_into(uint8_t *bytes) {

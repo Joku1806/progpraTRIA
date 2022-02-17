@@ -58,7 +58,7 @@ class StampPacketReader:
 if __name__ == "__main__":
     reader = StampPacketReader()
     
-    for i in track(range(1000)):
+    for i in track(range(100)):
       reader.receive()
     
     reader.print_stats()

@@ -11,8 +11,8 @@ enum field_positions {
   action_position = 0,
   sender_id_position = 1,
   receiver_id_position = 2,
-  rx_stamp_position = 3,
-  tx_stamp_position = 4,
+  timediff_D_position = 3,
+  timediff_R_position = 4,
 };
 
 class TRIA_GenericPacket : public TRIA_Field {

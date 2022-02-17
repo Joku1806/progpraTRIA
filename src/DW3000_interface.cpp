@@ -27,9 +27,11 @@ void DW3000_Interface::store_received_message(const dwt_cb_data_t *cb_data) {
     return;
   }
 
+  // FIXME: BinaryMessage sollte eine TRIA_Stamp() beinhalten
   BinaryMessage received;
 
-  dwt_readrxtimestamp((uint8_t *)&received.receive_time);
+  dwt_readrxtimestamp(m_stamp_buffer);
+  received.rx_stamp.initialise_from_buffer_no_bswap(m_stamp_buffer);
   dwt_readrxdata(received.data, cb_data->datalength - FCS_LEN, 0);
   received.data_length = cb_data->datalength - FCS_LEN;
 
@@ -48,44 +50,54 @@ void DW3000_Interface::save_tx_stamp() {
 
 TRIA_Stamp DW3000_Interface::get_tx_stamp() { return m_tx_stamp; }
 
-void DW3000_Interface::send_range_request(TRIA_RangeRequest &request) {
+void DW3000_Interface::send_ping(TRIA_Ping &ping) {
   dwt_forcetrxoff();
 
-  request.pack_into(m_packet_buffer);
-  VERIFY(dwt_writetxdata(TRIA_RangeRequest::PACKED_SIZE, m_packet_buffer, 0) == DWT_SUCCESS);
-  dwt_writetxfctrl(TRIA_RangeRequest::PACKED_SIZE + FCS_LEN, 0, 0);
-  VERIFY(dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
+  ping.pack_into(m_packet_buffer);
+  VERIFY(dwt_writetxdata(TRIA_Ping::PACKED_SIZE, m_packet_buffer, 0) == DWT_SUCCESS);
+  dwt_writetxfctrl(TRIA_Ping::PACKED_SIZE + FCS_LEN, 0, 0);
+
+  if (ping.is_first()) {
+    uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
+    uint64_t send_time_hi32 = sys_time_hi32 + SEND_DELAY + m_assigned_slot * SLOT_DELAY;
+
+    dwt_setdelayedtrxtime(send_time_hi32);
+    VERIFY(dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
+  } else {
+    VERIFY(dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
+  }
 
   while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};
-  // FIXME: sollte außerhalb nach der Funktion aufgerufen werden
   save_tx_stamp();
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
 #ifdef DEBUG
   Serial.print("Paket gesendet (DW): ");
-  request.print();
+  ping.print();
   Serial.print("\n");
 #endif
 }
 
-void DW3000_Interface::send_range_response(TRIA_RangeResponse &response) {
+void DW3000_Interface::send_data_pong(TRIA_DataPong &response, TRIA_Stamp &ping1_rx) {
   dwt_forcetrxoff();
 
-  BENCHMARK(
-      uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
-      uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
-      uint64_t send_time_hi32 = sys_time_hi32 + SEND_DELAY + SLOT_DELAY * m_assigned_slot;
+  BENCHMARK(uint16_t antenna_delay = dwt_read16bitoffsetreg(TX_ANTD_ID, 0);
+            uint32_t sys_time_hi32 = dwt_readsystimestamphi32();
+            uint64_t send_time_hi32 = sys_time_hi32 + SEND_DELAY;
 
-      auto tx = TRIA_Stamp((send_time_hi32 << 8) + antenna_delay); response.set_tx_stamp(tx);
-      response.pack_into(m_packet_buffer);
+            auto timediff_R = ping1_rx - get_tx_stamp();
+            auto timediff_D = TRIA_Stamp((send_time_hi32 << 8) + antenna_delay) - ping1_rx;
+            response.set_timediff_D(timediff_D); response.set_timediff_R(timediff_R);
 
-      VERIFY(dwt_writetxdata(TRIA_RangeResponse::PACKED_SIZE, m_packet_buffer, 0) == DWT_SUCCESS);
-      dwt_writetxfctrl(TRIA_RangeResponse::PACKED_SIZE + FCS_LEN, 0, 0);
-      dwt_setdelayedtrxtime(send_time_hi32);
+            response.pack_into(m_packet_buffer);
 
-      VERIFY(dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
+            VERIFY(dwt_writetxdata(TRIA_DataPong::PACKED_SIZE, m_packet_buffer, 0) == DWT_SUCCESS);
+            dwt_writetxfctrl(TRIA_DataPong::PACKED_SIZE + FCS_LEN, 0, 0);
+            dwt_setdelayedtrxtime(send_time_hi32);
 
-      while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};);
+            VERIFY(dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) == DWT_SUCCESS);
+
+            while (!(dwt_read8bitoffsetreg(SYS_STATUS_ID, 0) & SYS_STATUS_TXFRS_BIT_MASK)) {};);
 
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 

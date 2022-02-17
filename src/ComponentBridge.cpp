@@ -1,9 +1,9 @@
 
 #include <TRIA_helper.h>
 #include <lib/assertions.h>
+#include <packets/TRIA_DataPong.h>
 #include <packets/TRIA_MeasureReport.h>
-#include <packets/TRIA_RangeRequest.h>
-#include <packets/TRIA_RangeResponse.h>
+#include <packets/TRIA_Ping.h>
 #include <platform/pin_mappings.h>
 #include <src/ComponentBridge.h>
 
@@ -72,20 +72,19 @@ void ComponentBridge::process_new_lora_messages() {
     Serial.print("\n");
 #endif
 
-    if (received->is_type(range_request) && received->received_from().is_coordinator()) {
-      m_report.reset();
-      TRIA_RangeRequest repeated = TRIA_RangeRequest(m_id, TRIA_ID(tracker));
-      m_dw_interface.send_range_request(repeated);
+    if (received->is_type(ping) && received->received_from().is_coordinator()) {
+      if (m_id.is_trackee()) {
+        m_report.reset();
+      } else if (m_id.is_tracker()) {
+        TRIA_Ping start = TRIA_Ping(m_id, TRIA_ID(trackee));
+        m_dw_interface.send_ping(start);
+      }
     }
 
     if (received->is_type(measure_report) && m_id.is_coordinator()) {
       m_usb_interface.send_measurement(*static_cast<TRIA_MeasureReport *>(received));
     }
   }
-}
-
-uint64_t overflow_safe_timediff(uint64_t future, uint64_t past) {
-  return future >= past ? future - past : 0xffffffffff - past + future;
 }
 
 void ComponentBridge::process_new_dw_messages() {
@@ -106,24 +105,44 @@ void ComponentBridge::process_new_dw_messages() {
     Serial.print("\n");
 #endif
 
-    if (received->is_type(range_request)) {
-      auto response =
-          TRIA_RangeResponse(m_id, received->received_from(), TRIA_Stamp(message.receive_time));
-      m_dw_interface.send_range_response(response);
-    } else if (received->is_type(range_response)) {
-      TRIA_Stamp measured_rx = static_cast<TRIA_RangeResponse *>(received)->get_rx_stamp();
-      TRIA_Stamp measured_tx = static_cast<TRIA_RangeResponse *>(received)->get_tx_stamp();
+    if (received->is_type(ping)) {
+      if (static_cast<TRIA_Ping *>(received)->is_first()) {
+        auto response = TRIA_Ping(m_id, received->received_from());
+        response.increment_sequence();
+        m_dw_interface.send_ping(response);
 
+        TRIA_Stamp timediff_D = m_dw_interface.get_tx_stamp() - message.rx_stamp;
+        m_dw_interface.set_timediff_D(timediff_D);
+      } else {
+        auto response = TRIA_DataPong(m_id, received->received_from());
+        m_dw_interface.send_data_pong(response, message.rx_stamp);
+      }
+    } else if (received->is_type(data_pong)) {
+      TRIA_Stamp timediff_R = message.rx_stamp - m_dw_interface.get_tx_stamp();
+      m_dw_interface.set_timediff_R(timediff_R);
+
+      uint64_t tracker_timediff_R =
+          static_cast<TRIA_DataPong *>(received)->get_timediff_R().value();
+      uint64_t tracker_timediff_D =
+          static_cast<TRIA_DataPong *>(received)->get_timediff_D().value();
+      uint64_t own_timediff_R = m_dw_interface.get_timediff_R().value();
+      uint64_t own_timediff_D = m_dw_interface.get_timediff_D().value();
+
+      // FIXME: Keine Ahnung ob das noch gebraucht wird
       // äquivalent zum addieren von 34cm zur resultierenden Distanz
       // berechnet durch 0.34m * (1000000000000 / 15.65ps) / c_air
-      static const uint8_t tof_pad = 73;
-      uint64_t tof =
-          overflow_safe_timediff(message.receive_time, m_dw_interface.get_tx_stamp().value()) +
-          tof_pad;
-      uint64_t compute_time = overflow_safe_timediff(measured_tx.value(), measured_rx.value());
-      uint64_t adjusted_tof = tof >= compute_time ? (tof - compute_time) / 2 : 0;
+      // static const uint8_t tof_pad = 73;
 
-      auto measure = TRIA_Measure(received->received_from(), TRIA_Stamp(adjusted_tof));
+      uint64_t tof = (tracker_timediff_R * own_timediff_R - tracker_timediff_D * own_timediff_D) /
+                     (tracker_timediff_R + tracker_timediff_D + own_timediff_R + own_timediff_D);
+
+#ifdef DEBUG
+      Serial.print("Distanz = ");
+      Serial.print(tof * 15.65 / 1000000000000.0 * 299709000.0);
+      Serial.print("m\n");
+#endif
+
+      auto measure = TRIA_Measure(received->received_from(), TRIA_Stamp(tof));
       m_report.add_measurement(measure);
 
       if (m_report.finished()) {
@@ -137,6 +156,7 @@ void ComponentBridge::process_new_dw_messages() {
 void ComponentBridge::send_packet_over_lora(TRIA_GenericPacket &packet) {
   packet.pack_into(m_send_buffer);
   VERIFY(m_rf95.send(m_send_buffer, packet.packed_size()));
+  m_rf95.waitPacketSent();
 
 #ifdef DEBUG
   Serial.print("Paket gesendet (LoRa): ");
@@ -151,11 +171,16 @@ void ComponentBridge::receive_dw_message(const dwt_cb_data_t *cb_data) {
 }
 
 void ComponentBridge::execute() {
-  process_new_dw_messages();
   process_new_lora_messages();
+  process_new_dw_messages();
 
   if (m_id.is_coordinator() && m_usb_interface.measurement_requested()) {
-    TRIA_RangeRequest request = TRIA_RangeRequest(m_id, TRIA_ID(trackee));
-    send_packet_over_lora(request);
+    TRIA_Ping relayed = TRIA_Ping(m_id, TRIA_ID(0));
+    send_packet_over_lora(relayed);
+
+    if (m_id.is_tracker()) {
+      TRIA_Ping start = TRIA_Ping(m_id, TRIA_ID(trackee));
+      m_dw_interface.send_ping(start);
+    }
   }
 }

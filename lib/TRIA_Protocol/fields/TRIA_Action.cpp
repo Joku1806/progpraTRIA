@@ -14,8 +14,8 @@ void TRIA_Action::initialise_from_buffer(uint8_t *buffer) { m_action = (action)*
 
 void TRIA_Action::print() {
   switch (m_action) {
-    case range_request: Serial.print("Range Request"); break;
-    case range_response: Serial.print("Range Response"); break;
+    case ping: Serial.print("Ping"); break;
+    case data_pong: Serial.print("Data Pong"); break;
     case measure_report: Serial.print("Measure Report"); break;
   }
 }
