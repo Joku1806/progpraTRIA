@@ -128,11 +128,6 @@ void ComponentBridge::process_new_dw_messages() {
       uint64_t own_timediff_R = m_dw_interface.get_timediff_R().value();
       uint64_t own_timediff_D = m_dw_interface.get_timediff_D().value();
 
-      // FIXME: Keine Ahnung ob das noch gebraucht wird
-      // äquivalent zum addieren von 34cm zur resultierenden Distanz
-      // berechnet durch 0.34m * (1000000000000 / 15.65ps) / c_air
-      // static const uint8_t tof_pad = 73;
-
       uint64_t tof = (tracker_timediff_R * own_timediff_R - tracker_timediff_D * own_timediff_D) /
                      (tracker_timediff_R + tracker_timediff_D + own_timediff_R + own_timediff_D);
 

@@ -48,8 +48,8 @@ void DWIC_configure_spi(size_t spi_rate) {
   };
   dwt_configuretxrf(&tx_config);
 
-  // dwt_setrxantennadelay(16436);
-  // dwt_settxantennadelay(16436);
+  dwt_setrxantennadelay(16372);
+  dwt_settxantennadelay(16405);
 
   DWIC_set_spi_rate(spi_rate);
 }
