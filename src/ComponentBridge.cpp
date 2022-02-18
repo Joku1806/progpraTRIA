@@ -128,8 +128,25 @@ void ComponentBridge::process_new_dw_messages() {
       uint64_t own_timediff_R = m_dw_interface.get_timediff_R().value();
       uint64_t own_timediff_D = m_dw_interface.get_timediff_D().value();
 
-      uint64_t tof = (tracker_timediff_R * own_timediff_R - tracker_timediff_D * own_timediff_D) /
-                     (tracker_timediff_R + tracker_timediff_D + own_timediff_R + own_timediff_D);
+      uint64_t prod_R, prod_D, diff_RD, sum_all, tof;
+
+      // Wenn einer dieser Checks fehlschlägt, haben wir seeeeehr lange Verarbeitungszeiten von
+      // Nachrichten. Das sollte niemals vorkommen, deswegen einfach abstürzen.
+      if (__builtin_mul_overflow(tracker_timediff_R, own_timediff_R, &prod_R) ||
+          __builtin_mul_overflow(tracker_timediff_D, own_timediff_D, &prod_D) ||
+          __builtin_add_overflow(tracker_timediff_R, tracker_timediff_D, &sum_all) ||
+          __builtin_add_overflow(own_timediff_R, sum_all, &sum_all) ||
+          __builtin_add_overflow(own_timediff_D, sum_all, &sum_all)) {
+        VERIFY_NOT_REACHED();
+      }
+
+      // Falls wir bei kleinen Distanzen durch Messungenauigkeiten im Negativbereich landen, einfach
+      // in positiven Bereich spiegeln.
+      if (__builtin_sub_overflow(prod_R, prod_D, &diff_RD)) {
+        diff_RD = prod_D - prod_R;
+      }
+
+      tof = diff_RD / sum_all;
 
 #ifdef DEBUG
       Serial.print("Distanz = ");
