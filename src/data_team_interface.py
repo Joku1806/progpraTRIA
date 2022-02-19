@@ -2,7 +2,7 @@ import struct, serial, json, time
 from rich.progress import track
 from statistics import mean, variance
 
-class StampPacketReader:
+class DataTeamInterface:
     # prüft erst, ob der Port übereinstimmt
     SERIAL_PORT = '/dev/ttyACM0'
     SEND_SIGNAL = 0x6D # m
@@ -56,7 +56,7 @@ class StampPacketReader:
         print(f"Average distance to UNIT {key} = {mean(self.dist_stats[key])}m, Variance = {variance(self.dist_stats[key])}m")
 
 if __name__ == "__main__":
-    reader = StampPacketReader()
+    reader = DataTeamInterface()
     
     for i in track(range(100)):
       reader.receive()
