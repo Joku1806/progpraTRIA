@@ -23,7 +23,7 @@
 
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_ON
 
 #define VERIFY(expression)                                                                         \
   do {                                                                                             \

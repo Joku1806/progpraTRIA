@@ -71,7 +71,7 @@ void DW3000_Interface::send_ping(TRIA_Ping &ping) {
   save_tx_stamp();
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
-#ifdef DEBUG
+#ifdef DEBUG_ON
   Serial.print("Paket gesendet (DW): ");
   ping.print();
   Serial.print("\n");
@@ -101,7 +101,7 @@ void DW3000_Interface::send_data_pong(TRIA_DataPong &response, TRIA_Stamp &ping1
 
   dwt_write8bitoffsetreg(SYS_STATUS_ID, 0, SYS_STATUS_TXFRS_BIT_MASK);
 
-#ifdef DEBUG
+#ifdef DEBUG_ON
   Serial.print("Paket gesendet (DW): ");
   response.print();
   Serial.print("\n");

@@ -16,7 +16,7 @@ void ComponentBridge::initialise(
   pinMode(SPI_chipselect, OUTPUT);
   SPI.begin();
 
-#if defined(DEBUG) || defined(BENCH_ON) || defined(COORDINATOR)
+#if defined(DEBUG_ON) || defined(BENCH_ON) || defined(COORDINATOR)
   Serial.begin(9600);
   while (!Serial) {};
 #endif
@@ -66,7 +66,7 @@ void ComponentBridge::process_new_lora_messages() {
     }
     VERIFY(received != nullptr);
 
-#ifdef DEBUG
+#ifdef DEBUG_ON
     Serial.print("Paket empfangen (LoRa): ");
     received->print();
     Serial.print("\n");
@@ -97,8 +97,8 @@ void ComponentBridge::process_new_dw_messages() {
     }
     VERIFY(received != nullptr);
 
-#ifdef DEBUG
-    // FIXME: aus irgendeinem Grund kommt mit -D DEBUG die Range Response des Coordinator nicht beim
+#ifdef DEBUG_ON
+    // FIXME: aus irgendeinem Grund kommt mit -D DEBUG_ON die Range Response des Coordinator nicht beim
     // Trackee an. pls investigate
     Serial.print("Paket empfangen (DW): ");
     received->print();
@@ -148,7 +148,7 @@ void ComponentBridge::process_new_dw_messages() {
 
       tof = diff_RD / sum_all;
 
-#ifdef DEBUG
+#ifdef DEBUG_ON
       Serial.print("Distanz = ");
       Serial.print(tof * 15.65 / 1000000000000.0 * 299709000.0);
       Serial.print("m\n");
@@ -170,7 +170,7 @@ void ComponentBridge::send_packet_over_lora(TRIA_GenericPacket &packet) {
   VERIFY(m_rf95.send(m_send_buffer, packet.packed_size()));
   m_rf95.waitPacketSent();
 
-#ifdef DEBUG
+#ifdef DEBUG_ON
   Serial.print("Paket gesendet (LoRa): ");
   packet.print();
   Serial.print("\n");

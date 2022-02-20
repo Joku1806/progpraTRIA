@@ -13,7 +13,7 @@ bool USB_Interface::measurement_requested() {
 }
 
 void USB_Interface::send_measurement(TRIA_MeasureReport &report) {
-#ifdef DEBUG
+#ifdef DEBUG_ON
   Serial.println("Sending report to data team.");
   report.print();
   Serial.print("\n");
